@@ -10,7 +10,7 @@ Typically, FluentValidation is used against a viewmodel/inputmodel **not a busin
 [[6]](http://stackoverflow.com/a/29809446),
 [[1]](https://github.com/JeremySkinner/FluentValidation/issues/260#issuecomment-220558484),
 [[7]](http://stackoverflow.com/q/32247571),
-[[8]](http://stackoverflow.com/q/3317706).
+[[8]](http://stackoverflow.com/q/3317706),
 [[9]](http://stackoverflow.com/q/18664943).
 Автор FluentValidation предлагает использовать обходной путь [[1]](https://github.com/JeremySkinner/FluentValidation/issues/260#issuecomment-220558484).
 
@@ -53,8 +53,44 @@ message.Validator().For(_ => _.Subject)
 Метод `Validate` возвращает список объектов `ErrorInfo` с информацией об ошибках.
  ```csharp
 var errorInfos = await command.Validate();
-var errorInfo = errorInfos.Single();
-Assert.Equal("Subject", errorInfo.PropertyName);
-Assert.Equal("'Subject' should not be empty.", errorInfo.Message);
+Assert.Equal("Subject", errorInfos.Single().PropertyName);
+Assert.Equal("'Subject' should not be empty.", errorInfos.Single().Message);
 ```
 В процессе валидации если для свойства уже есть ошибка, то остальные связанные с этим свойством функции не вызываются.
+
+## Вложенные объекты
+Валидация свойств вложенного объекта:
+```csharp
+var message = new Message {
+    Person = new Person()
+};
+var validator = message.Validator();
+validator.For(_ => _.Person).Validator()
+    .For(_ => _.FirstName)
+    .NotEmpty();
+var errorInfos = await validator.Command.Validate();
+Assert.Equal("Person.FirstName", errorInfos.Single().PropertyName);
+Assert.Equal("'FirstName' should not be empty.", errorInfos.Single().Message);
+```
+
+## Вложенные коллекции
+Валидация свойств элементов вложенной коллекции:
+```csharp
+var message = new Message {
+    Attachments = new List<Attachment> {
+        new Attachment(),
+        new Attachment()
+    }
+};
+var validator = message.Validator();
+foreach (var attachment in validator.For(_ => _.Attachments).Validators())
+{
+    attachment.For(_ => _.FileName).NotEmpty();
+}
+var errorInfos = await validator.Command.Validate();
+Assert.Equal(2, errorInfos.Count);
+Assert.Equal("Attachments[0].FileName", errorInfos[0].PropertyName);
+Assert.Equal("'FileName' should not be empty.", errorInfos[0].Message);
+Assert.Equal("Attachments[1].FileName", errorInfos[1].PropertyName);
+Assert.Equal("'FileName' should not be empty.", errorInfos[1].Message);
+```
