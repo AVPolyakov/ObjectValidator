@@ -67,10 +67,11 @@ namespace ObjectValidator
             Dictionary<MethodBase, PropertyInfo> infos;
             if (!propertyDictionaryByGetMethod.TryGetValue(methodBase.DeclaringType, out infos))
             {
-                infos = methodBase.DeclaringType.GetProperties().ToDictionary(_ => {
-                    MethodBase method = _.GetGetMethod();
-                    return method;
-                });
+                infos = methodBase.DeclaringType.GetProperties(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                    .ToDictionary(_ => {
+                        MethodBase method = _.GetGetMethod(true);
+                        return method;
+                    });
                 propertyDictionaryByGetMethod.TryAdd(methodBase.DeclaringType, infos);
             }
             var propertyInfo = infos[methodBase];

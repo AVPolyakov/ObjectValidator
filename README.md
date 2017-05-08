@@ -24,7 +24,7 @@ var message = new Message(); //объект, который проверяем
 var command = new ValidationCommand();
 command.Add(
     nameof(Message.Subject),
-    () => string.IsNullOrEmpty(message.Subject)
+    () => string.IsNullOrWhiteSpace(message.Subject)
         ? new ErrorInfo {
             PropertyName = nameof(Message.Subject),
             Message = $"'{nameof(Message.Subject)}' should not be empty."
@@ -35,12 +35,12 @@ command.Add(
 В этом коде есть ссылка на имя свойства `nameof(Message.Subject)` и получение значения свойства `message.Subject`. С помощью `IPropertyValidator` для обеих ссылок можно завести одну переменную.
  ```csharp
 var subject = message.Validator().For(_ => _.Subject);
-subject.Validator.Command.Add(
-    subject.PropertyName(),
-    () => string.IsNullOrEmpty(subject.Value())
+subject.Command.Add(
+    subject.PropertyName,
+    () => string.IsNullOrWhiteSpace(subject.Value)
         ? new ErrorInfo {
-            PropertyName = subject.PropertyName(),
-            Message = $"'{subject.PropertyName()}' should not be empty."
+            PropertyName = subject.PropertyName,
+            Message = $"'{subject.PropertyName}' should not be empty."
         }
         : null
 );
@@ -68,7 +68,7 @@ var validator = message.Validator();
 validator.For(_ => _.Person).Validator()
     .For(_ => _.FirstName)
     .NotEmpty();
-var errorInfos = await validator.Command.Validate();
+var errorInfos = await validator.Validate();
 Assert.Equal("Person.FirstName", errorInfos.Single().PropertyName);
 Assert.Equal("'FirstName' should not be empty.", errorInfos.Single().Message);
 ```
@@ -83,11 +83,11 @@ var message = new Message {
     }
 };
 var validator = message.Validator();
-foreach (var attachment in validator.For(_ => _.Attachments).Validators())
+foreach (var attachmentValidator in validator.For(_ => _.Attachments).Validators())
 {
-    attachment.For(_ => _.FileName).NotEmpty();
+    attachmentValidator.For(_ => _.FileName).NotEmpty();
 }
-var errorInfos = await validator.Command.Validate();
+var errorInfos = await validator.Validate();
 Assert.Equal(2, errorInfos.Count);
 Assert.Equal("Attachments[0].FileName", errorInfos[0].PropertyName);
 Assert.Equal("'FileName' should not be empty.", errorInfos[0].Message);

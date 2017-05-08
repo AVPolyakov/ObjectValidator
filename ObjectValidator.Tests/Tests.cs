@@ -37,16 +37,16 @@ namespace ObjectValidator.Tests
         {
             var message = new Message();
             var subject = message.Validator().For(_ => _.Subject);
-            subject.Validator.Command.Add(
-                subject.PropertyName(),
-                () => string.IsNullOrWhiteSpace(subject.Value())
+            subject.Command.Add(
+                subject.PropertyName,
+                () => string.IsNullOrWhiteSpace(subject.Value)
                     ? new ErrorInfo {
-                        PropertyName = subject.PropertyName(),
-                        Message = $"'{subject.PropertyName()}' should not be empty."
+                        PropertyName = subject.PropertyName,
+                        Message = $"'{subject.PropertyName}' should not be empty."
                     }
                     : null
             );
-            var errorInfos = await subject.Validator.Command.Validate();
+            var errorInfos = await subject.Command.Validate();
             Assert.Equal("Subject", errorInfos.Single().PropertyName);
             Assert.Equal("'Subject' should not be empty.", errorInfos.Single().Message);
         }
@@ -58,7 +58,7 @@ namespace ObjectValidator.Tests
             var validator = message.Validator();
             validator.For(_ => _.Subject)
                 .NotEmpty();
-            var errorInfos = await validator.Command.Validate();
+            var errorInfos = await validator.Validate();
             Assert.Equal("Subject", errorInfos.Single().PropertyName);
             Assert.Equal("'Subject' should not be empty.", errorInfos.Single().Message);
         }
@@ -73,7 +73,7 @@ namespace ObjectValidator.Tests
             validator.For(_ => _.Person).Validator()
                 .For(_ => _.FirstName)
                 .NotEmpty();
-            var errorInfos = await validator.Command.Validate();
+            var errorInfos = await validator.Validate();
             Assert.Equal("Person.FirstName", errorInfos.Single().PropertyName);
             Assert.Equal("'FirstName' should not be empty.", errorInfos.Single().Message);
         }
@@ -88,11 +88,11 @@ namespace ObjectValidator.Tests
                 }
             };
             var validator = message.Validator();
-            foreach (var attachment in validator.For(_ => _.Attachments).Validators())
+            foreach (var attachmentValidator in validator.For(_ => _.Attachments).Validators())
             {
-                attachment.For(_ => _.FileName).NotEmpty();
+                attachmentValidator.For(_ => _.FileName).NotEmpty();
             }
-            var errorInfos = await validator.Command.Validate();
+            var errorInfos = await validator.Validate();
             Assert.Equal(2, errorInfos.Count);
             Assert.Equal("Attachments[0].FileName", errorInfos[0].PropertyName);
             Assert.Equal("'FileName' should not be empty.", errorInfos[0].Message);
@@ -107,7 +107,7 @@ namespace ObjectValidator.Tests
             var validator = message.Validator();
             validator.For(_ => _.Subject)
                 .NotEmpty();
-            var errorInfos = await validator.Command.Validate();
+            var errorInfos = await validator.Validate();
             Assert.Equal("notempty_error", errorInfos.Single().Code);
         }
 
@@ -118,7 +118,7 @@ namespace ObjectValidator.Tests
             var validator = message.Validator();
             validator.For(_ => _.Subject, "Message subject")
                 .NotEmpty();
-            var errorInfos = await validator.Command.Validate();
+            var errorInfos = await validator.Validate();
             Assert.Equal("Subject", errorInfos.Single().PropertyName);
             Assert.Equal("Message subject", errorInfos.Single().DisplayPropertyName);
             Assert.Equal("notempty_error", errorInfos.Single().Code);
@@ -126,17 +126,17 @@ namespace ObjectValidator.Tests
         }
 
         [Fact]
-        public async Task NotNull_Int()
+        public async Task NotNull_NullableInt()
         {
             var entity1 = new Entity1();
             var validator = entity1.Validator();
-            validator.For(_ => _.Int1)
+            validator.For(_ => _.NullableInt1)
                 .NotNull();
-            var errorInfos = await validator.Command.Validate();
-            Assert.Equal("Int1", errorInfos.Single().PropertyName);
-            Assert.Equal("Int1", errorInfos.Single().DisplayPropertyName);
+            var errorInfos = await validator.Validate();
+            Assert.Equal("NullableInt1", errorInfos.Single().PropertyName);
+            Assert.Equal("NullableInt1", errorInfos.Single().DisplayPropertyName);
             Assert.Equal("notnull_error", errorInfos.Single().Code);
-            Assert.Equal("'Int1' must not be empty.", errorInfos.Single().Message);
+            Assert.Equal("'NullableInt1' must not be empty.", errorInfos.Single().Message);
         }
 
         [Fact]
@@ -146,11 +146,54 @@ namespace ObjectValidator.Tests
             var validator = message.Validator();
             validator.For(_ => _.Person)
                 .NotNull();
-            var errorInfos = await validator.Command.Validate();
+            var errorInfos = await validator.Validate();
             Assert.Equal("Person", errorInfos.Single().PropertyName);
             Assert.Equal("Person", errorInfos.Single().DisplayPropertyName);
             Assert.Equal("notnull_error", errorInfos.Single().Code);
             Assert.Equal("'Person' must not be empty.", errorInfos.Single().Message);
+        }
+
+        [Fact]
+        public async Task NotEqual()
+        {
+            var entity1 = new Entity1 {Int2 = 7};
+            var validator = entity1.Validator();
+            validator.For(_ => _.Int2)
+                .NotEqual(7);
+            var errorInfos = await validator.Validate();
+            Assert.Equal("Int2", errorInfos.Single().PropertyName);
+            Assert.Equal("Int2", errorInfos.Single().DisplayPropertyName);
+            Assert.Equal("notequal_error", errorInfos.Single().Code);
+            Assert.Equal("'Int2' should not be equal to '7'.", errorInfos.Single().Message);
+        }
+
+        [Fact]
+        public async Task Length()
+        {
+            var message = new Message {Subject = "Subject1"};
+            var validator = message.Validator();
+            validator.For(_ => _.Subject)
+                .Length(3, 5);
+            var errorInfos = await validator.Validate();
+            Assert.Equal("Subject", errorInfos.Single().PropertyName);
+            Assert.Equal("Subject", errorInfos.Single().DisplayPropertyName);
+            Assert.Equal("length_error", errorInfos.Single().Code);
+            Assert.Equal("'Subject' must be between 3 and 5 characters. You entered 8 characters.", errorInfos.Single().Message);
+        }
+
+        [Fact]
+        public async Task If()
+        {
+            var message = new Message {Subject = "Subject1", Body = "Body1"};
+            var validator = message.Validator();
+            validator.For(_ => _.Subject)
+                .If(v => v.Value == "Subject1",
+                    () => Resource1.TestMessage1, v => v.Value, v => v.Object.Body);
+            var errorInfos = await validator.Validate();
+            Assert.Equal("Subject", errorInfos.Single().PropertyName);
+            Assert.Equal("Subject", errorInfos.Single().DisplayPropertyName);
+            Assert.Equal("TestMessage1", errorInfos.Single().Code);
+            Assert.Equal("Test message 'Subject1', 'Body1'.", errorInfos.Single().Message);
         }
     }
 
@@ -158,6 +201,7 @@ namespace ObjectValidator.Tests
     {
         public Person Person { get; set; }
         public string Subject { get; set; }
+        public string Body { get; set; }
         public List<Attachment> Attachments { get; set; }
     }
 
@@ -173,6 +217,7 @@ namespace ObjectValidator.Tests
 
     public class Entity1
     {
-        public int? Int1 { get; set; }
+        public int? NullableInt1 { get; set; }
+        public int Int2 { get; set; }
     }
 }

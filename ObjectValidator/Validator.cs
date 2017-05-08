@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ObjectValidator
 {
@@ -7,6 +9,7 @@ namespace ObjectValidator
         T Object { get; }
         ValidationCommand Command { get; }
         string PropertyPrefix { get; }
+        Task<List<ErrorInfo>> Validate();
     }
 
     public class Validator<T> : IValidator<T>
@@ -21,6 +24,8 @@ namespace ObjectValidator
             Command = command;
             PropertyPrefix = propertyPrefix;
         }
+
+        public Task<List<ErrorInfo>> Validate() => Command.Validate();
     }
 
     public static class ValidatorExtensions
