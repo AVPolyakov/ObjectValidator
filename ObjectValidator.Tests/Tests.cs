@@ -20,7 +20,7 @@ namespace ObjectValidator.Tests
             var command = new ValidationCommand();
             command.Add(
                 nameof(Message.Subject),
-                () => string.IsNullOrEmpty(message.Subject)
+                () => string.IsNullOrWhiteSpace(message.Subject)
                     ? new ErrorInfo {
                         PropertyName = nameof(Message.Subject),
                         Message = $"'{nameof(Message.Subject)}' should not be empty."
@@ -39,7 +39,7 @@ namespace ObjectValidator.Tests
             var subject = message.Validator().For(_ => _.Subject);
             subject.Validator.Command.Add(
                 subject.PropertyName(),
-                () => string.IsNullOrEmpty(subject.Value())
+                () => string.IsNullOrWhiteSpace(subject.Value())
                     ? new ErrorInfo {
                         PropertyName = subject.PropertyName(),
                         Message = $"'{subject.PropertyName()}' should not be empty."

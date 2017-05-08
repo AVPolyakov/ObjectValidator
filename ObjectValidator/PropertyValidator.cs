@@ -56,7 +56,7 @@ namespace ObjectValidator
             @this.Validator.Command.Add(
                 @this.PropertyName(),
                 () => {
-                    if (string.IsNullOrEmpty(@this.Value()))
+                    if (string.IsNullOrWhiteSpace(@this.Value()))
                     {
                         var errorTuple = ErrorTuple.Create(message ?? (() => Messages.notempty_error));
                         return new ErrorInfo {
