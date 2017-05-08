@@ -58,7 +58,30 @@ namespace ObjectValidator
                 () => {
                     if (string.IsNullOrWhiteSpace(@this.Value()))
                     {
-                        var errorTuple = ErrorTuple.Create(message ?? (() => Messages.notempty_error));
+                        var errorTuple = ErrorTuple.Create(message, () => Messages.notempty_error);
+                        return new ErrorInfo {
+                            PropertyName = @this.PropertyName(),
+                            DisplayPropertyName = @this.DisplayName,
+                            Code = errorTuple.Code,
+                            Message = errorTuple.Message.ReplacePlaceholderWithValue(
+                                CreateTuple("PropertyName", @this.DisplayName)),
+                        };
+                    }
+                    else
+                        return null;
+                });
+            return @this;			
+        }
+
+        public static IPropertyValidator<T, TProperty> NotNull<T, TProperty>(this IPropertyValidator<T, TProperty> @this, Func<string> message = null)
+        {
+            @this.Validator.Command.Add(
+                @this.PropertyName(),
+                () => {
+                    object value = @this.Value();
+                    if (value == null)
+                    {
+                        var errorTuple = ErrorTuple.Create(message, () => Messages.notnull_error);
                         return new ErrorInfo {
                             PropertyName = @this.PropertyName(),
                             DisplayPropertyName = @this.DisplayName,
@@ -82,6 +105,9 @@ namespace ObjectValidator
         {
             public static ErrorTuple Create(Func<string> message) 
                 => new ErrorTuple(ReflectionUtil.GetMemberInfo(message).Name, message());
+
+            public static ErrorTuple Create(Func<string> message, Func<string> defaultMessage) 
+                => Create(message ?? defaultMessage);
 
             public string Code { get; }
             public string Message { get; }

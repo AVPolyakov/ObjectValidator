@@ -124,6 +124,34 @@ namespace ObjectValidator.Tests
             Assert.Equal("notempty_error", errorInfos.Single().Code);
             Assert.Equal("'Message subject' should not be empty.", errorInfos.Single().Message);
         }
+
+        [Fact]
+        public async Task NotNull_Int()
+        {
+            var entity1 = new Entity1();
+            var validator = entity1.Validator();
+            validator.For(_ => _.Int1)
+                .NotNull();
+            var errorInfos = await validator.Command.Validate();
+            Assert.Equal("Int1", errorInfos.Single().PropertyName);
+            Assert.Equal("Int1", errorInfos.Single().DisplayPropertyName);
+            Assert.Equal("notnull_error", errorInfos.Single().Code);
+            Assert.Equal("'Int1' must not be empty.", errorInfos.Single().Message);
+        }
+
+        [Fact]
+        public async Task NotNull_ObjectProperty()
+        {
+            var message = new Message();
+            var validator = message.Validator();
+            validator.For(_ => _.Person)
+                .NotNull();
+            var errorInfos = await validator.Command.Validate();
+            Assert.Equal("Person", errorInfos.Single().PropertyName);
+            Assert.Equal("Person", errorInfos.Single().DisplayPropertyName);
+            Assert.Equal("notnull_error", errorInfos.Single().Code);
+            Assert.Equal("'Person' must not be empty.", errorInfos.Single().Message);
+        }
     }
 
     public class Message
@@ -141,5 +169,10 @@ namespace ObjectValidator.Tests
     public class Attachment
     {
         public string FileName { get; set; }
+    }
+
+    public class Entity1
+    {
+        public int? Int1 { get; set; }
     }
 }
