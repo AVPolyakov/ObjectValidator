@@ -19,7 +19,7 @@ namespace ObjectValidator
             new ConcurrentDictionary<MethodInfo, FieldInfo>();
 
         /// <summary>
-        /// Получает объект <see cref="PropertyInfo"/> для свойства, которое используется в теле метода
+        /// Получает <see cref="PropertyInfo"/> для свойства, которое используется в теле метода
         /// <paramref name="func"/>. Например, <c><![CDATA[GetProperyInfo<Message, string>(_ => _.Subject)]]></c>,
         /// возвращает <see cref="PropertyInfo"/> для свойства <c>Subject</c>.
         /// </summary>
@@ -37,7 +37,7 @@ namespace ObjectValidator
         }
 
         /// <summary>
-        /// Получает объект <see cref="MemberInfo"/> для свойства или поля, которое используется 
+        /// Получает <see cref="MemberInfo"/> для свойства или поля, которое используется 
         /// в теле метода <paramref name="func"/>. Например,
         /// <c><![CDATA[GetMemberInfo<string>(() => MyResources.Subject)]]></c>,
         /// возвращает <see cref="MemberInfo"/> для свойства <c>Subject</c>.

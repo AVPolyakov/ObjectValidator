@@ -99,6 +99,31 @@ namespace ObjectValidator.Tests
             Assert.Equal("Attachments[1].FileName", errorInfos[1].PropertyName);
             Assert.Equal("'FileName' should not be empty.", errorInfos[1].Message);
         }
+
+        [Fact]
+        public async Task ErrorCode()
+        {
+            var message = new Message();
+            var validator = message.Validator();
+            validator.For(_ => _.Subject)
+                .NotEmpty();
+            var errorInfos = await validator.Command.Validate();
+            Assert.Equal("notempty_error", errorInfos.Single().Code);
+        }
+
+        [Fact]
+        public async Task DisplayName()
+        {
+            var message = new Message();
+            var validator = message.Validator();
+            validator.For(_ => _.Subject, "Message subject")
+                .NotEmpty();
+            var errorInfos = await validator.Command.Validate();
+            Assert.Equal("Subject", errorInfos.Single().PropertyName);
+            Assert.Equal("Message subject", errorInfos.Single().DisplayPropertyName);
+            Assert.Equal("notempty_error", errorInfos.Single().Code);
+            Assert.Equal("'Message subject' should not be empty.", errorInfos.Single().Message);
+        }
     }
 
     public class Message

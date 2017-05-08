@@ -28,7 +28,7 @@ namespace ObjectValidator
         public static IValidator<T> Validator<T>(this T @object) => new Validator<T>(@object, new ValidationCommand());
 
         public static IPropertyValidator<T, TProperty> For<T, TProperty>(this IValidator<T> @this, Func<T, TProperty> func,
-            string localizedName = null)
-            => new PropertyValidator<T, TProperty>(@this, func, localizedName);
+            string displayName = null)
+            => new PropertyValidator<T, TProperty>(@this, func, displayName);
     }
 }
