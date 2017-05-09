@@ -182,17 +182,54 @@ namespace ObjectValidator.Tests
         }
 
         [Fact]
-        public async Task If()
+        public async Task AddToPropertyValidator()
         {
             var message = new Message {Subject = "Subject1", Body = "Body1"};
             var validator = message.Validator();
             validator.For(_ => _.Subject)
-                .If(v => v.Value == "Subject1",
-                    () => Resource1.TestMessage1, v => v.Value, v => v.Object.Body);
+                .Add(v => v.Value == "Subject1"
+                    ? v.CreateErrorInfo(() => Resource1.TestMessage2)
+                    : null);
+            var errorInfos = await validator.Validate();
+            Assert.Equal("Subject", errorInfos.Single().PropertyName);
+            Assert.Equal("Subject", errorInfos.Single().DisplayPropertyName);
+            Assert.Equal("TestMessage2", errorInfos.Single().Code);
+            Assert.Equal("Test message.", errorInfos.Single().Message);
+        }
+
+        [Fact]
+        public async Task AddToPropertyValidator_WithArgs()
+        {
+            var message = new Message {Subject = "Subject1", Body = "Body1"};
+            var validator = message.Validator();
+            validator.For(_ => _.Subject)
+                .Add(v => v.Value == "Subject1"
+                    ? v.CreateErrorInfo(() => Resource1.TestMessage1,
+                        text => string.Format(text, v.Value, v.Object.Body))
+                    : null);
             var errorInfos = await validator.Validate();
             Assert.Equal("Subject", errorInfos.Single().PropertyName);
             Assert.Equal("Subject", errorInfos.Single().DisplayPropertyName);
             Assert.Equal("TestMessage1", errorInfos.Single().Code);
+            Assert.Equal("Test message 'Subject', 'Subject1', 'Body1'.", errorInfos.Single().Message);
+        }
+
+        [Fact]
+        public async Task AddToPropertyValidator_WithNamedArgs()
+        {
+            var message = new Message {Subject = "Subject1", Body = "Body1"};
+            var validator = message.Validator();
+            validator.For(_ => _.Subject)
+                .Add(v => v.Value == "Subject1"
+                    ? v.CreateErrorInfo(() => Resource1.TestMessage3,
+                        text => text.ReplacePlaceholderWithValue(
+                            MessageFormatter.CreateTuple("Subject", v.Value),
+                            MessageFormatter.CreateTuple("Body", v.Object.Body)))
+                    : null);
+            var errorInfos = await validator.Validate();
+            Assert.Equal("Subject", errorInfos.Single().PropertyName);
+            Assert.Equal("Subject", errorInfos.Single().DisplayPropertyName);
+            Assert.Equal("TestMessage3", errorInfos.Single().Code);
             Assert.Equal("Test message 'Subject1', 'Body1'.", errorInfos.Single().Message);
         }
     }

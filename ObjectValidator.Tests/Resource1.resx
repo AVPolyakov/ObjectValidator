@@ -118,6 +118,12 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="TestMessage1" xml:space="preserve">
-    <value>Test message '{0}', '{1}'.</value>
+    <value>Test message '{PropertyName}', '{0}', '{1}'.</value>
+  </data>
+  <data name="TestMessage2" xml:space="preserve">
+    <value>Test message.</value>
+  </data>
+  <data name="TestMessage3" xml:space="preserve">
+    <value>Test message '{Subject}', '{Body}'.</value>
   </data>
 </root>

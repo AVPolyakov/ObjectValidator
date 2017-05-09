@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IlReader.cs" />
+    <Compile Include="MessageFormatter.cs" />
     <Compile Include="PropertyValidator.cs" />
     <Compile Include="Validator.cs" />
     <Compile Include="ReflectionUtil.cs" />

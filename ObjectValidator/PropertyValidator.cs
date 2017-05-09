@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentValidation.Resources;
+using static ObjectValidator.MessageFormatter;
 
 namespace ObjectValidator
 {
@@ -16,6 +17,8 @@ namespace ObjectValidator
         string ShortPropertyName { get; }
         string PropertyName { get; }
         ValidationCommand Command { get; }
+        IPropertyValidator<T, TProperty> Add(Func<IPropertyValidator<T, TProperty>, Task<ErrorInfo>> func);
+        IPropertyValidator<T, TProperty> Add(Func<IPropertyValidator<T, TProperty>, ErrorInfo> func);
     }
 
     public class PropertyValidator<T, TProperty> : IPropertyValidator<T, TProperty>
@@ -42,6 +45,18 @@ namespace ObjectValidator
         public string PropertyName => $"{Validator.PropertyPrefix}{ShortPropertyName}";
 
         public ValidationCommand Command => Validator.Command;
+
+        public IPropertyValidator<T, TProperty> Add(Func<IPropertyValidator<T, TProperty>, Task<ErrorInfo>> func)
+        {
+            Command.Add(PropertyName, () => func(this));
+            return this;			
+        }
+
+        public IPropertyValidator<T, TProperty> Add(Func<IPropertyValidator<T, TProperty>, ErrorInfo> func)
+        {
+            Command.Add(PropertyName, () => func(this));
+            return this;
+        }
     }
 
     public static class PropertyValidatorExtensions
@@ -59,153 +74,51 @@ namespace ObjectValidator
         }
 
         public static IPropertyValidator<T, string> NotEmpty<T>(this IPropertyValidator<T, string> @this, Func<string> message = null)
-        {
-            @this.Command.Add(
-                @this.PropertyName,
-                () => {
-                    if (string.IsNullOrWhiteSpace(@this.Value))
-                    {
-                        var errorTuple = ErrorTuple.Create(message, () => Messages.notempty_error);
-                        return new ErrorInfo {
-                            PropertyName = @this.PropertyName,
-                            DisplayPropertyName = @this.DisplayName,
-                            Code = errorTuple.Code,
-                            Message = errorTuple.Message.ReplacePlaceholderWithValue(
-                                CreateTuple("PropertyName", @this.DisplayName))
-                        };
-                    }
-                    else
-                        return null;
-                });
-            return @this;			
-        }
+            => @this.Add(v => string.IsNullOrWhiteSpace(v.Value)
+                ? v.CreateErrorInfo(Message(message, () => Messages.notempty_error))
+                : null);
 
         public static IPropertyValidator<T, TProperty> NotNull<T, TProperty>(this IPropertyValidator<T, TProperty> @this, Func<string> message = null)
-        {
-            @this.Command.Add(
-                @this.PropertyName,
-                () => {
-                    object value = @this.Value;
-                    if (value == null)
-                    {
-                        var errorTuple = ErrorTuple.Create(message, () => Messages.notnull_error);
-                        return new ErrorInfo {
-                            PropertyName = @this.PropertyName,
-                            DisplayPropertyName = @this.DisplayName,
-                            Code = errorTuple.Code,
-                            Message = errorTuple.Message.ReplacePlaceholderWithValue(
-                                CreateTuple("PropertyName", @this.DisplayName))
-                        };
-                    }
-                    else
-                        return null;
-                });
-            return @this;			
-        }
+            => @this.Add(v => {
+                object value = v.Value;
+                return value == null
+                    ? v.CreateErrorInfo(Message(message, () => Messages.notnull_error))
+                    : null;
+            });
 
         public static IPropertyValidator<T, TProperty> NotEqual<T, TProperty>(this IPropertyValidator<T, TProperty> @this, TProperty comparisonValue,
             Func<string> message = null)
-        {
-            @this.Command.Add(
-                @this.PropertyName,
-                () => {
-                    if (Equals(@this.Value, comparisonValue))
-                    {
-                        var errorTuple = ErrorTuple.Create(message, () => Messages.notequal_error);
-                        return new ErrorInfo {
-                            PropertyName = @this.PropertyName,
-                            DisplayPropertyName = @this.DisplayName,
-                            Code = errorTuple.Code,
-                            Message = errorTuple.Message.ReplacePlaceholderWithValue(
-                                CreateTuple("PropertyName", @this.DisplayName),
-                                CreateTuple("ComparisonValue", comparisonValue))
-                        };
-                    }
-                    else
-                        return null;
-                });
-            return @this;			
-        }
+            => @this.Add(v => Equals(v.Value, comparisonValue)
+                ? v.CreateErrorInfo(Message(message, () => Messages.notequal_error),
+                    text => text.ReplacePlaceholderWithValue(CreateTuple("ComparisonValue", comparisonValue)))
+                : null);
 
         public static IPropertyValidator<T, string> Length<T>(this IPropertyValidator<T, string> @this, int minLength, int maxLength,
             Func<string> message = null)
+            => @this.Add(v => {
+                var length = @this.Value?.Length ?? 0;
+                return length < minLength || length > maxLength
+                    ? v.CreateErrorInfo(Message(message, () => Messages.length_error),
+                        text => text.ReplacePlaceholderWithValue(
+                            CreateTuple("MaxLength", maxLength),
+                            CreateTuple("MinLength", minLength),
+                            CreateTuple("TotalLength", length)))
+                    : null;
+            });
+
+        public static ErrorInfo CreateErrorInfo<T, TProperty>(this IPropertyValidator<T, TProperty> @this, Func<string> message,
+            Func<string, string> converter = null)
         {
-            @this.Command.Add(
-                @this.PropertyName,
-                () => {
-                    var length = @this.Value?.Length ?? 0;
-                    if (length < minLength || length > maxLength)
-                    {
-                        var errorTuple = ErrorTuple.Create(message, () => Messages.length_error);
-                        return new ErrorInfo {
-                            PropertyName = @this.PropertyName,
-                            DisplayPropertyName = @this.DisplayName,
-                            Code = errorTuple.Code,
-                            Message = errorTuple.Message.ReplacePlaceholderWithValue(
-                                CreateTuple("PropertyName", @this.DisplayName),
-                                CreateTuple("MaxLength", maxLength),
-                                CreateTuple("MinLength", minLength),
-                                CreateTuple("TotalLength", length))
-                        };
-                    }
-                    else
-                        return null;
-                });
-            return @this;			
+            var text = message().ReplacePlaceholderWithValue(CreateTuple("PropertyName", @this.DisplayName));
+            return new ErrorInfo {
+                PropertyName = @this.PropertyName,
+                DisplayPropertyName = @this.DisplayName,
+                Code = ReflectionUtil.GetMemberInfo(message).Name,
+                Message = converter != null ? converter(text) : text
+            };
         }
 
-        public static IPropertyValidator<T, TProperty> If<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
-            Func<IPropertyValidator<T, TProperty>, bool> predicate, Func<string> message,
-            params Func<IPropertyValidator<T, TProperty>, object>[] formatArgs) 
-            => @this.If(_ => Task.FromResult(predicate(_)), message, formatArgs);
-
-        public static IPropertyValidator<T, TProperty> If<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
-            Func<IPropertyValidator<T, TProperty>, Task<bool>> predicate, Func<string> message,
-            params Func<IPropertyValidator<T, TProperty>, object>[] formatArgs)
-        {
-            @this.Command.Add(
-                @this.PropertyName,
-                async () => {
-                    if (await predicate(@this))
-                    {
-                        var errorTuple = ErrorTuple.Create(message);
-                        return new ErrorInfo {
-                            PropertyName = @this.PropertyName,
-                            DisplayPropertyName = @this.DisplayName,
-                            Code = errorTuple.Code,
-                            Message = string.Format(
-                                errorTuple.Message.ReplacePlaceholderWithValue(
-                                    CreateTuple("PropertyName", @this.DisplayName)),
-                                formatArgs.Select(func => func(@this)).ToArray())
-                        };
-                    }
-                    else
-                        return null;
-                });
-            return @this;			
-        }
-
-        private static string ReplacePlaceholderWithValue(this string seed, params Tuple<string, object>[] tuples)
-            => tuples.Aggregate(seed, (current, tuple) => current.Replace($"{{{tuple.Item1}}}", tuple.Item2?.ToString()));
-
-        private static Tuple<string, object> CreateTuple(string key, object value) => Tuple.Create(key, value);
-
-        private class ErrorTuple
-        {
-            public static ErrorTuple Create(Func<string> message) 
-                => new ErrorTuple(ReflectionUtil.GetMemberInfo(message).Name, message());
-
-            public static ErrorTuple Create(Func<string> message, Func<string> defaultMessage) 
-                => Create(message ?? defaultMessage);
-
-            public string Code { get; }
-            public string Message { get; }
-
-            public ErrorTuple(string code, string message)
-            {
-                Code = code;
-                Message = message;
-            }
-        }
+        private static Func<string> Message(Func<string> message, Func<string> defaultMessage)
+            => message ?? defaultMessage;
     }
 }

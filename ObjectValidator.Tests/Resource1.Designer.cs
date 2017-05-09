@@ -61,11 +61,29 @@ namespace ObjectValidator.Tests {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Test message &apos;{0}&apos;, &apos;{1}&apos;..
+        ///   Looks up a localized string similar to Test message &apos;{PropertyName}&apos;, &apos;{0}&apos;, &apos;{1}&apos;..
         /// </summary>
         internal static string TestMessage1 {
             get {
                 return ResourceManager.GetString("TestMessage1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Test message..
+        /// </summary>
+        internal static string TestMessage2 {
+            get {
+                return ResourceManager.GetString("TestMessage2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Test message &apos;{Subject}&apos;, &apos;{Body}&apos;..
+        /// </summary>
+        internal static string TestMessage3 {
+            get {
+                return ResourceManager.GetString("TestMessage3", resourceCulture);
             }
         }
     }
