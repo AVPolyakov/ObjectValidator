@@ -64,6 +64,54 @@ namespace ObjectValidator.Tests
         }
 
         [Fact]
+        public async Task NotEmpty_Int()
+        {
+            var entity1 = new Entity1();
+            var validator = entity1.Validator();
+            validator.For(_ => _.Int2)
+                .NotEmpty();
+            var errorInfos = await validator.Validate();
+            Assert.Equal("Int2", errorInfos.Single().PropertyName);
+            Assert.Equal("'Int2' should not be empty.", errorInfos.Single().Message);
+        }
+
+        [Fact]
+        public async Task NotEmpty_NullableInt()
+        {
+            var entity1 = new Entity1();
+            var validator = entity1.Validator();
+            validator.For(_ => _.NullableInt1)
+                .NotEmpty();
+            var errorInfos = await validator.Validate();
+            Assert.Equal("NullableInt1", errorInfos.Single().PropertyName);
+            Assert.Equal("'NullableInt1' should not be empty.", errorInfos.Single().Message);
+        }
+
+        [Fact]
+        public async Task NotEmpty_List()
+        {
+            var entity1 = new Entity1();
+            var validator = entity1.Validator();
+            validator.For(_ => _.List1)
+                .NotEmpty();
+            var errorInfos = await validator.Validate();
+            Assert.Equal("List1", errorInfos.Single().PropertyName);
+            Assert.Equal("'List1' should not be empty.", errorInfos.Single().Message);
+        }
+
+        [Fact]
+        public async Task NotEmpty_Null()
+        {
+            var entity1 = new Entity1 {List1 = null};
+            var validator = entity1.Validator();
+            validator.For(_ => _.List1)
+                .NotEmpty();
+            var errorInfos = await validator.Validate();
+            Assert.Equal("List1", errorInfos.Single().PropertyName);
+            Assert.Equal("'List1' should not be empty.", errorInfos.Single().Message);
+        }
+
+        [Fact]
         public async Task NestedObject()
         {
             var message = new Message {
@@ -256,5 +304,6 @@ namespace ObjectValidator.Tests
     {
         public int? NullableInt1 { get; set; }
         public int Int2 { get; set; }
+        public List<string> List1 { get; set; } = new List<string>();
     }
 }

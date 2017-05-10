@@ -30,7 +30,7 @@ namespace ObjectValidator
             if (propertyDictionary.TryGetValue(methodInfo, out value)) return value;
             var tuples = IlReader.Read(methodInfo).ToList();
             if (!tuples.Select(_ => _.Item1).SequenceEqual(new[] {OpCodes.Ldarg_1, OpCodes.Callvirt, OpCodes.Ret}))
-                throw new ArgumentException($"The {nameof(func)} should encapsulate a method with a body that " +
+                throw new ArgumentException($"The {nameof(func)} must encapsulate a method with a body that " +
                     "consists of a sequence of intermediate language instructions " +
                     $"{nameof(OpCodes.Ldarg_1)}, {nameof(OpCodes.Callvirt)}, {nameof(OpCodes.Ret)}.", nameof(func));
             return ResolveProperty(methodInfo, tuples[1].Item2.Value);
@@ -54,7 +54,7 @@ namespace ObjectValidator
             else if (codes.SequenceEqual(new[] {OpCodes.Ldarg_0, OpCodes.Ldfld, OpCodes.Ret}))
                 return ResolveField(methodInfo, tuples[1].Item2.Value);
             else
-                throw new ArgumentException($"The {nameof(func)} should encapsulate a method with a body that " +
+                throw new ArgumentException($"The {nameof(func)} must encapsulate a method with a body that " +
                     "consists of a sequence of intermediate language instructions " +
                     $"{nameof(OpCodes.Call)}, {nameof(OpCodes.Ret)} or " +
                     $"{nameof(OpCodes.Ldarg_0)}, {nameof(OpCodes.Ldfld)}, {nameof(OpCodes.Ret)}.", nameof(func));

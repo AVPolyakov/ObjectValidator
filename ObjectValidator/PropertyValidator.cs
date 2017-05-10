@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -59,10 +60,25 @@ namespace ObjectValidator
                     item, @this.Command, $"{@this.PropertyName}[{i}]."));
         }
 
-        public static IPropertyValidator<T, string> NotEmpty<T>(this IPropertyValidator<T, string> @this, Func<string> message = null)
-            => @this.Add(v => string.IsNullOrWhiteSpace(v.Value)
-                ? v.CreateErrorInfo(Message(message, () => Messages.notempty_error))
-                : null);
+        public static IPropertyValidator<T, TProperty> NotEmpty<T, TProperty>(this IPropertyValidator<T, TProperty> @this, Func<string> message = null)
+            => @this.Add(v => {
+                object value = v.Value;
+                bool b;
+                var s = value as string;
+                if (s != null)
+                    b = string.IsNullOrWhiteSpace(s);
+                else
+                {
+                    var enumerable = value as IEnumerable;
+                    if (enumerable != null)
+                        b = !enumerable.Cast<object>().Any();
+                    else
+                        b = Equals(value, default(TProperty));
+                }
+                return b
+                    ? v.CreateErrorInfo(Message(message, () => Messages.notempty_error))
+                    : null;
+            });
 
         public static IPropertyValidator<T, TProperty> NotNull<T, TProperty>(this IPropertyValidator<T, TProperty> @this, Func<string> message = null)
             => @this.Add(v => {
