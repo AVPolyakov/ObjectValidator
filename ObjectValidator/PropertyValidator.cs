@@ -17,8 +17,6 @@ namespace ObjectValidator
         string ShortPropertyName { get; }
         string PropertyName { get; }
         ValidationCommand Command { get; }
-        IPropertyValidator<T, TProperty> Add(Func<IPropertyValidator<T, TProperty>, Task<ErrorInfo>> func);
-        IPropertyValidator<T, TProperty> Add(Func<IPropertyValidator<T, TProperty>, ErrorInfo> func);
     }
 
     public class PropertyValidator<T, TProperty> : IPropertyValidator<T, TProperty>
@@ -45,18 +43,6 @@ namespace ObjectValidator
         public string PropertyName => $"{Validator.PropertyPrefix}{ShortPropertyName}";
 
         public ValidationCommand Command => Validator.Command;
-
-        public IPropertyValidator<T, TProperty> Add(Func<IPropertyValidator<T, TProperty>, Task<ErrorInfo>> func)
-        {
-            Command.Add(PropertyName, () => func(this));
-            return this;			
-        }
-
-        public IPropertyValidator<T, TProperty> Add(Func<IPropertyValidator<T, TProperty>, ErrorInfo> func)
-        {
-            Command.Add(PropertyName, () => func(this));
-            return this;
-        }
     }
 
     public static class PropertyValidatorExtensions
@@ -116,6 +102,20 @@ namespace ObjectValidator
                 Code = ReflectionUtil.GetMemberInfo(message).Name,
                 Message = converter != null ? converter(text) : text
             };
+        }
+
+        public static IPropertyValidator<T, TProperty> Add<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
+            Func<IPropertyValidator<T, TProperty>, Task<ErrorInfo>> func)
+        {
+            @this.Command.Add(@this.PropertyName, () => func(@this));
+            return @this;			
+        }
+
+        public static IPropertyValidator<T, TProperty> Add<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
+            Func<IPropertyValidator<T, TProperty>, ErrorInfo> func)
+        {
+            @this.Command.Add(@this.PropertyName, () => func(@this));
+            return @this;
         }
 
         private static Func<string> Message(Func<string> message, Func<string> defaultMessage)
