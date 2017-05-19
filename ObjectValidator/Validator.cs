@@ -9,7 +9,7 @@ namespace ObjectValidator
         T Object { get; }
         ValidationCommand Command { get; }
         string PropertyPrefix { get; }
-        Task<List<ErrorInfo>> Validate();
+        Task<List<FailureData>> Validate();
     }
 
     public class Validator<T> : IValidator<T>
@@ -25,7 +25,7 @@ namespace ObjectValidator
             PropertyPrefix = propertyPrefix;
         }
 
-        public Task<List<ErrorInfo>> Validate() => Command.Validate();
+        public Task<List<FailureData>> Validate() => Command.Validate();
     }
 
     public static class ValidatorExtensions

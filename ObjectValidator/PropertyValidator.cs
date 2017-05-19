@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentValidation.Resources;
-using static ObjectValidator.MessageFormatter;
 
 namespace ObjectValidator
 {
@@ -46,7 +45,7 @@ namespace ObjectValidator
         public ValidationCommand Command => Validator.Command;
     }
 
-    public static class PropertyValidatorExtensions
+    public static class PropertyValidatorExtensions 
     {
         public static IValidator<TProperty> Validator<T, TProperty>(this IPropertyValidator<T, TProperty> @this)
             => new Validator<TProperty>(@this.Value, @this.Command, $"{@this.PropertyName}.");
@@ -60,7 +59,15 @@ namespace ObjectValidator
                     item, @this.Command, $"{@this.PropertyName}[{i}]."));
         }
 
-        public static IPropertyValidator<T, TProperty> NotEmpty<T, TProperty>(this IPropertyValidator<T, TProperty> @this, Func<string> message = null)
+        public static IPropertyValidator<T, TProperty> NotNull<T, TProperty>(this IPropertyValidator<T, TProperty> @this)
+            => @this.Add(v => {
+                object value = v.Value;
+                return value == null
+                    ? v.CreateFailureData(() => Messages.notnull_error)
+                    : null;
+            });
+
+        public static IPropertyValidator<T, TProperty> NotEmpty<T, TProperty>(this IPropertyValidator<T, TProperty> @this)
             => @this.Add(v => {
                 object value = v.Value;
                 bool b;
@@ -76,65 +83,61 @@ namespace ObjectValidator
                         b = Equals(value, default(TProperty));
                 }
                 return b
-                    ? v.CreateErrorInfo(Message(message, () => Messages.notempty_error))
+                    ? v.CreateFailureData(() => Messages.notempty_error)
                     : null;
             });
 
-        public static IPropertyValidator<T, TProperty> NotNull<T, TProperty>(this IPropertyValidator<T, TProperty> @this, Func<string> message = null)
-            => @this.Add(v => {
-                object value = v.Value;
-                return value == null
-                    ? v.CreateErrorInfo(Message(message, () => Messages.notnull_error))
-                    : null;
-            });
-
-        public static IPropertyValidator<T, TProperty> NotEqual<T, TProperty>(this IPropertyValidator<T, TProperty> @this, TProperty comparisonValue,
-            Func<string> message = null)
+        public static IPropertyValidator<T, TProperty> NotEqual<T, TProperty>(this IPropertyValidator<T, TProperty> @this, TProperty comparisonValue)
             => @this.Add(v => Equals(v.Value, comparisonValue)
-                ? v.CreateErrorInfo(Message(message, () => Messages.notequal_error),
-                    text => text.ReplacePlaceholderWithValue(CreateTuple("ComparisonValue", comparisonValue)))
+                ? v.CreateFailureData(() => Messages.notequal_error,
+                    text => text.ReplacePlaceholderWithValue(MessageFormatter.CreateTuple("ComparisonValue", comparisonValue)))
                 : null);
 
-        public static IPropertyValidator<T, string> Length<T>(this IPropertyValidator<T, string> @this, int minLength, int maxLength,
-            Func<string> message = null)
+        public static IPropertyValidator<T, string> Length<T>(this IPropertyValidator<T, string> @this, int minLength, int maxLength)
             => @this.Add(v => {
                 var length = @this.Value?.Length ?? 0;
                 return length < minLength || length > maxLength
-                    ? v.CreateErrorInfo(Message(message, () => Messages.length_error),
+                    ? v.CreateFailureData(() => Messages.length_error,
                         text => text.ReplacePlaceholderWithValue(
-                            CreateTuple("MaxLength", maxLength),
-                            CreateTuple("MinLength", minLength),
-                            CreateTuple("TotalLength", length)))
+                            MessageFormatter.CreateTuple("MaxLength", maxLength),
+                            MessageFormatter.CreateTuple("MinLength", minLength),
+                            MessageFormatter.CreateTuple("TotalLength", length)))
                     : null;
             });
 
-        public static ErrorInfo CreateErrorInfo<T, TProperty>(this IPropertyValidator<T, TProperty> @this, Func<string> message,
+        public static IPropertyValidator<T, TProperty> If<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
+            Func<IPropertyValidator<T, TProperty>, bool> func, Func<string> message, params Func<IPropertyValidator<T, TProperty>, object>[] formatArgs) 
+            => @this.If(value => Task.FromResult(func(value)), message, formatArgs);
+
+        public static IPropertyValidator<T, TProperty> If<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
+            Func<IPropertyValidator<T, TProperty>, Task<bool>> func, Func<string> message, params Func<IPropertyValidator<T, TProperty>, object>[] formatArgs)
+            => @this.Add(async v => await func(v)
+                ? v.CreateFailureData(message, text => string.Format(text, formatArgs.Select(f => f(v)).ToArray()))
+                : null);
+
+        public static FailureData CreateFailureData<T, TProperty>(this IPropertyValidator<T, TProperty> @this, Func<string> message,
             Func<string, string> converter = null)
         {
-            var text = message().ReplacePlaceholderWithValue(CreateTuple("PropertyName", @this.DisplayName));
-            return new ErrorInfo {
-                PropertyName = @this.PropertyName,
-                DisplayPropertyName = @this.DisplayName,
-                Code = ReflectionUtil.GetMemberInfo(message).Name,
-                Message = converter != null ? converter(text) : text
-            };
+            var text = message().ReplacePlaceholderWithValue(MessageFormatter.CreateTuple("PropertyName", @this.DisplayName));
+            return new FailureData(
+                errorMessage: converter != null ? converter(text) : text,
+                errorCode: ReflectionUtil.GetMemberInfo(message).Name,
+                propertyName: @this.PropertyName,
+                propertyLocalizedName: @this.DisplayName);
         }
 
         public static IPropertyValidator<T, TProperty> Add<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
-            Func<IPropertyValidator<T, TProperty>, Task<ErrorInfo>> func)
+            Func<IPropertyValidator<T, TProperty>, Task<FailureData>> func)
         {
             @this.Command.Add(@this.PropertyName, () => func(@this));
             return @this;			
         }
 
         public static IPropertyValidator<T, TProperty> Add<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
-            Func<IPropertyValidator<T, TProperty>, ErrorInfo> func)
+            Func<IPropertyValidator<T, TProperty>, FailureData> func)
         {
             @this.Command.Add(@this.PropertyName, () => func(@this));
             return @this;
         }
-
-        private static Func<string> Message(Func<string> message, Func<string> defaultMessage)
-            => message ?? defaultMessage;
     }
 }

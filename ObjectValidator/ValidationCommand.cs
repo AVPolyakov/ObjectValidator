@@ -6,44 +6,37 @@ namespace ObjectValidator
 {
     public class ValidationCommand
     {
-        private readonly List<Item> items = new List<Item>();
+        private readonly List<Func<ValidationContext, Task>> funcs = new List<Func<ValidationContext, Task>>();
 
-        public void Add(string propertyName, Func<ErrorInfo> func) => Add(propertyName, () => Task.FromResult(func()));
+        public void Add(Func<ValidationContext, Task> func) => funcs.Add(func);
 
-        public void Add(string propertyName, Func<Task<ErrorInfo>> func)
+        public void Add(Action<ValidationContext> action) => funcs.Add(context => {
+            action(context);
+            return Task.CompletedTask;
+        });
+
+        public void Add(FailureData failureData) => Add(context => context.Add(failureData));
+
+        public void Add(string propertyName, Func<FailureData> func) => Add(propertyName, () => Task.FromResult(func()));
+
+        public void Add(string propertyName, Func<Task<FailureData>> func)
         {
-            items.Add(new Item(propertyName, func));
-        }
-
-        public async Task<List<ErrorInfo>> Validate()
-        {
-            var result = new List<ErrorInfo>();
-            var set = new HashSet<string>();
-            foreach (var item in items)
-            {
-                if (!set.Contains(item.PropertyName))
+            Add(async context => {
+                if (!context.Contains(propertyName))
                 {
-                    var errorInfo = await item.Func();
-                    if (errorInfo != null)
-                    {
-                        result.Add(errorInfo);
-                        set.Add(item.PropertyName);
-                    }
+                    var failureData = await func();
+                    if (failureData != null)
+                        context.Add(propertyName, failureData);
                 }
-            }
-            return result;
+            });
         }
 
-        private class Item
+        public async Task<List<FailureData>> Validate()
         {
-            public string PropertyName { get; }
-            public Func<Task<ErrorInfo>> Func { get; }
-
-            public Item(string propertyName, Func<Task<ErrorInfo>> func)
-            {
-                PropertyName = propertyName;
-                Func = func;
-            }
+            var context = new ValidationContext();
+            foreach (var func in funcs)
+                await func(context);
+            return context.Errors;
         }
     }
 }

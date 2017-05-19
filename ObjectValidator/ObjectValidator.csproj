@@ -44,13 +44,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FailureData.cs" />
     <Compile Include="IlReader.cs" />
     <Compile Include="MessageFormatter.cs" />
     <Compile Include="PropertyValidator.cs" />
+    <Compile Include="ValidationContext.cs" />
     <Compile Include="Validator.cs" />
     <Compile Include="ReflectionUtil.cs" />
     <Compile Include="ValidationCommand.cs" />
-    <Compile Include="ErrorInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
