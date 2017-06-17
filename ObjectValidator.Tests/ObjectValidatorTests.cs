@@ -156,7 +156,7 @@ namespace ObjectValidator.Tests
             validator.For(_ => _.Subject)
                 .NotEmpty();
             var failureDatas = await validator.Validate();
-            Assert.Equal("notempty_error", failureDatas.Single().ErrorCode);
+            Assert.Equal("NotEmptyValidator", failureDatas.Single().ErrorCode);
         }
 
         [Fact]
@@ -169,7 +169,7 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("Subject", failureDatas.Single().GetPropertyName());
             Assert.Equal("Message subject", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("notempty_error", failureDatas.Single().ErrorCode);
+            Assert.Equal("NotEmptyValidator", failureDatas.Single().ErrorCode);
             Assert.Equal("'Message subject' should not be empty.", failureDatas.Single().ErrorMessage);
         }
 
@@ -183,7 +183,7 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("NullableInt1", failureDatas.Single().GetPropertyName());
             Assert.Equal("NullableInt1", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("notnull_error", failureDatas.Single().ErrorCode);
+            Assert.Equal("NotNullValidator", failureDatas.Single().ErrorCode);
             Assert.Equal("'NullableInt1' must not be empty.", failureDatas.Single().ErrorMessage);
         }
 
@@ -197,7 +197,7 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("Person", failureDatas.Single().GetPropertyName());
             Assert.Equal("Person", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("notnull_error", failureDatas.Single().ErrorCode);
+            Assert.Equal("NotNullValidator", failureDatas.Single().ErrorCode);
             Assert.Equal("'Person' must not be empty.", failureDatas.Single().ErrorMessage);
         }
 
@@ -211,7 +211,7 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("Int2", failureDatas.Single().GetPropertyName());
             Assert.Equal("Int2", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("notequal_error", failureDatas.Single().ErrorCode);
+            Assert.Equal("NotEqualValidator", failureDatas.Single().ErrorCode);
             Assert.Equal("'Int2' should not be equal to '7'.", failureDatas.Single().ErrorMessage);
         }
 
@@ -225,7 +225,7 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("Subject", failureDatas.Single().GetPropertyName());
             Assert.Equal("Subject", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("length_error", failureDatas.Single().ErrorCode);
+            Assert.Equal("LengthValidator", failureDatas.Single().ErrorCode);
             Assert.Equal("'Subject' must be between 3 and 5 characters. You entered 8 characters.", failureDatas.Single().ErrorMessage);
         }
 

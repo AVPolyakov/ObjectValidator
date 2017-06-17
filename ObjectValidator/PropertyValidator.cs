@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FluentValidation.Resources;
+using FluentValidation;
+using FluentValidation.Validators;
 
 namespace ObjectValidator
 {
@@ -63,7 +64,7 @@ namespace ObjectValidator
             => @this.Add(v => {
                 object value = v.Value;
                 return value == null
-                    ? v.CreateFailureData(() => Messages.notnull_error)
+                    ? v.CreateFailureData(nameof(NotNullValidator))
                     : null;
             });
 
@@ -83,13 +84,13 @@ namespace ObjectValidator
                         b = Equals(value, default(TProperty));
                 }
                 return b
-                    ? v.CreateFailureData(() => Messages.notempty_error)
+                    ? v.CreateFailureData(nameof(NotEmptyValidator))
                     : null;
             });
 
         public static IPropertyValidator<T, TProperty> NotEqual<T, TProperty>(this IPropertyValidator<T, TProperty> @this, TProperty comparisonValue)
             => @this.Add(v => Equals(v.Value, comparisonValue)
-                ? v.CreateFailureData(() => Messages.notequal_error,
+                ? v.CreateFailureData(nameof(NotEqualValidator),
                     text => text.ReplacePlaceholderWithValue(MessageFormatter.CreateTuple("ComparisonValue", comparisonValue)))
                 : null);
 
@@ -97,7 +98,7 @@ namespace ObjectValidator
             => @this.Add(v => {
                 var length = @this.Value?.Length ?? 0;
                 return length < minLength || length > maxLength
-                    ? v.CreateFailureData(() => Messages.length_error,
+                    ? v.CreateFailureData(nameof(LengthValidator),
                         text => text.ReplacePlaceholderWithValue(
                             MessageFormatter.CreateTuple("MaxLength", maxLength),
                             MessageFormatter.CreateTuple("MinLength", minLength),
@@ -122,6 +123,18 @@ namespace ObjectValidator
             return new FailureData(
                 errorMessage: converter != null ? converter(text) : text,
                 errorCode: ReflectionUtil.GetMemberInfo(message).Name,
+                propertyName: @this.PropertyName,
+                propertyLocalizedName: @this.DisplayName);
+        }
+
+        public static FailureData CreateFailureData<T, TProperty>(this IPropertyValidator<T, TProperty> @this, string key,
+            Func<string, string> converter = null)
+        {
+            var text = ValidatorOptions.LanguageManager.GetString(key)
+                .ReplacePlaceholderWithValue(MessageFormatter.CreateTuple("PropertyName", @this.DisplayName));
+            return new FailureData(
+                errorMessage: converter != null ? converter(text) : text,
+                errorCode: key,
                 propertyName: @this.PropertyName,
                 propertyLocalizedName: @this.DisplayName);
         }
