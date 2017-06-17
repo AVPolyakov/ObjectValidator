@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Validators;
@@ -88,6 +89,11 @@ namespace ObjectValidator
                     : null;
             });
 
+        private static readonly Regex emailRegex = new Regex(new EmailValidator().Expression, RegexOptions.IgnoreCase);
+
+        public static IPropertyValidator<T, string> EmailAddress<T>(this IPropertyValidator<T, string> @this)
+            => @this.Add(v => !emailRegex.IsMatch(@this.Value) ? v.CreateFailureData(nameof(EmailValidator)) : null);
+
         public static IPropertyValidator<T, TProperty> NotEqual<T, TProperty>(this IPropertyValidator<T, TProperty> @this, TProperty comparisonValue)
             => @this.Add(v => Equals(v.Value, comparisonValue)
                 ? v.CreateFailureData(nameof(NotEqualValidator),
@@ -120,15 +126,13 @@ namespace ObjectValidator
 
         public static IPropertyValidator<T, TProperty> ExclusiveBetween<T, TProperty>(this IPropertyValidator<T, TProperty> @this, TProperty from, TProperty to)
             where TProperty : IComparable<TProperty>, IComparable
-            => @this.Add(v => {
-                return from.CompareTo(@this.Value) >= 0 || to.CompareTo(@this.Value) <= 0
-                    ? v.CreateFailureData(nameof(InclusiveBetweenValidator),
-                        text => text.ReplacePlaceholderWithValue(
-                            MessageFormatter.CreateTuple("From", from),
-                            MessageFormatter.CreateTuple("To", to),
-                            MessageFormatter.CreateTuple("Value", @this.Value)))
-                    : null;
-            });
+            => @this.Add(v => from.CompareTo(@this.Value) >= 0 || to.CompareTo(@this.Value) <= 0
+                ? v.CreateFailureData(nameof(InclusiveBetweenValidator),
+                    text => text.ReplacePlaceholderWithValue(
+                        MessageFormatter.CreateTuple("From", @from),
+                        MessageFormatter.CreateTuple("To", to),
+                        MessageFormatter.CreateTuple("Value", @this.Value)))
+                : null);
 
         public static IPropertyValidator<T, TProperty> If<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
             Func<IPropertyValidator<T, TProperty>, bool> func, Func<string> message, params Func<IPropertyValidator<T, TProperty>, object>[] formatArgs) 

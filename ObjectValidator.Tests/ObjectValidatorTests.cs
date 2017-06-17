@@ -64,6 +64,29 @@ namespace ObjectValidator.Tests
         }
 
         [Fact]
+        public async Task EmailAddress_Fail()
+        {
+            var message = new Message {Subject = "test@testcom"};
+            var validator = message.Validator();
+            validator.For(_ => _.Subject)
+                .EmailAddress();
+            var failureDatas = await validator.Validate();
+            Assert.Equal("Subject", failureDatas.Single().GetPropertyName());
+            Assert.Equal("'Subject' is not a valid email address.", failureDatas.Single().ErrorMessage);
+        }
+
+        [Fact]
+        public async Task EmailAddress_Succeed()
+        {
+            var message = new Message {Subject = "test@test.com"};
+            var validator = message.Validator();
+            validator.For(_ => _.Subject)
+                .EmailAddress();
+            var failureDatas = await validator.Validate();
+            Assert.Equal(0, failureDatas.Count);
+        }
+
+        [Fact]
         public async Task NotEmpty_Int()
         {
             var entity1 = new Entity1();
