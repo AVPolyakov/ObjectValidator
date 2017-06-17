@@ -106,6 +106,30 @@ namespace ObjectValidator
                     : null;
             });
 
+        public static IPropertyValidator<T, TProperty> InclusiveBetween<T, TProperty>(this IPropertyValidator<T, TProperty> @this, TProperty from, TProperty to)
+            where TProperty : IComparable<TProperty>, IComparable
+            => @this.Add(v => {
+                return from.CompareTo(@this.Value) > 0 || to.CompareTo(@this.Value) < 0
+                    ? v.CreateFailureData(nameof(InclusiveBetweenValidator),
+                        text => text.ReplacePlaceholderWithValue(
+                            MessageFormatter.CreateTuple("From", from),
+                            MessageFormatter.CreateTuple("To", to),
+                            MessageFormatter.CreateTuple("Value", @this.Value)))
+                    : null;
+            });
+
+        public static IPropertyValidator<T, TProperty> ExclusiveBetween<T, TProperty>(this IPropertyValidator<T, TProperty> @this, TProperty from, TProperty to)
+            where TProperty : IComparable<TProperty>, IComparable
+            => @this.Add(v => {
+                return from.CompareTo(@this.Value) >= 0 || to.CompareTo(@this.Value) <= 0
+                    ? v.CreateFailureData(nameof(InclusiveBetweenValidator),
+                        text => text.ReplacePlaceholderWithValue(
+                            MessageFormatter.CreateTuple("From", from),
+                            MessageFormatter.CreateTuple("To", to),
+                            MessageFormatter.CreateTuple("Value", @this.Value)))
+                    : null;
+            });
+
         public static IPropertyValidator<T, TProperty> If<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
             Func<IPropertyValidator<T, TProperty>, bool> func, Func<string> message, params Func<IPropertyValidator<T, TProperty>, object>[] formatArgs) 
             => @this.If(value => Task.FromResult(func(value)), message, formatArgs);

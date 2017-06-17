@@ -230,6 +230,34 @@ namespace ObjectValidator.Tests
         }
 
         [Fact]
+        public async Task InclusiveBetween()
+        {
+            var entity1 = new Entity1 {Long1 = -25};
+            var validator = entity1.Validator();
+            validator.For(_ => _.Long1)
+                .InclusiveBetween(1, 200);
+            var failureDatas = await validator.Validate();
+            Assert.Equal("Long1", failureDatas.Single().GetPropertyName());
+            Assert.Equal("Long1", failureDatas.Single().GetPropertyLocalizedName());
+            Assert.Equal("InclusiveBetweenValidator", failureDatas.Single().ErrorCode);
+            Assert.Equal("'Long1' must be between 1 and 200. You entered -25.", failureDatas.Single().ErrorMessage);
+        }
+
+        [Fact]
+        public async Task ExclusiveBetween()
+        {
+            var entity1 = new Entity1 {Long1 = -25};
+            var validator = entity1.Validator();
+            validator.For(_ => _.Long1)
+                .ExclusiveBetween(1, 200);
+            var failureDatas = await validator.Validate();
+            Assert.Equal("Long1", failureDatas.Single().GetPropertyName());
+            Assert.Equal("Long1", failureDatas.Single().GetPropertyLocalizedName());
+            Assert.Equal("InclusiveBetweenValidator", failureDatas.Single().ErrorCode);
+            Assert.Equal("'Long1' must be between 1 and 200. You entered -25.", failureDatas.Single().ErrorMessage);
+        }
+
+        [Fact]
         public async Task If()
         {
             var message = new Message {Subject = "Subject1", Body = "Body1"};
@@ -301,6 +329,7 @@ namespace ObjectValidator.Tests
     {
         public int? NullableInt1 { get; set; }
         public int Int2 { get; set; }
+        public long Long1 { get; set; }
         public List<string> List1 { get; set; } = new List<string>();
     }
 }
