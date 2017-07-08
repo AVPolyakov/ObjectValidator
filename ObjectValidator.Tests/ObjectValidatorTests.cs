@@ -123,6 +123,18 @@ namespace ObjectValidator.Tests
         }
 
         [Fact]
+        public async Task ForThis()
+        {
+            var entity1 = new Entity1 {List2 = new List<long> {0}};
+            var validator = entity1.Validator();
+            foreach (var item in validator.For(_ => _.List2).Validators())
+                item.ForThis("Name1").NotEmpty();
+            var failureDatas = await validator.Validate();
+            Assert.Equal("List2[0]", failureDatas.Single().GetPropertyName());
+            Assert.Equal("'Name1' should not be empty.", failureDatas.Single().ErrorMessage);
+        }
+
+        [Fact]
         public async Task NotEmpty_Null()
         {
             var entity1 = new Entity1 {List1 = null};
@@ -354,5 +366,6 @@ namespace ObjectValidator.Tests
         public int Int2 { get; set; }
         public long Long1 { get; set; }
         public List<string> List1 { get; set; } = new List<string>();
+        public List<long> List2 { get; set; }
     }
 }

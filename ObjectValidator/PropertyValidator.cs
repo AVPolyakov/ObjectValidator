@@ -12,7 +12,6 @@ namespace ObjectValidator
     public interface IPropertyValidator<T, out TProperty>
     {
         IValidator<T> Validator { get; }
-        Func<T, TProperty> Func { get; }
         string DisplayName { get; }
         T Object { get; }
         TProperty Value { get; }
@@ -24,25 +23,27 @@ namespace ObjectValidator
     public class PropertyValidator<T, TProperty> : IPropertyValidator<T, TProperty>
     {
         public IValidator<T> Validator { get; }
-        public Func<T, TProperty> Func { get; }
+        private readonly Func<T, TProperty> valueFunc;
+        private readonly Func<string> name;
         private readonly string displayName;
 
-        public PropertyValidator(IValidator<T> validator, Func<T, TProperty> func, string displayName)
+        public PropertyValidator(IValidator<T> validator, Func<T, TProperty> valueFunc, Func<string> name, string displayName)
         {
             Validator = validator;
-            Func = func;
+            this.valueFunc = valueFunc;
+            this.name = name;
             this.displayName = displayName;
         }
 
-        public TProperty Value => Func(Object);
+        public TProperty Value => valueFunc(Object);
 
         public string DisplayName => displayName ?? ShortPropertyName;
 
         public T Object => Validator.Object;
 
-        public string ShortPropertyName => ReflectionUtil.GetProperyInfo(Func).Name;
+        public string ShortPropertyName => name();
 
-        public string PropertyName => $"{Validator.PropertyPrefix}{ShortPropertyName}";
+        public string PropertyName => string.Join(".", new[] {Validator.PropertyPrefix, ShortPropertyName}.Where(_ => !string.IsNullOrEmpty(_)));
 
         public ValidationCommand Command => Validator.Command;
     }
@@ -50,7 +51,7 @@ namespace ObjectValidator
     public static class PropertyValidatorExtensions 
     {
         public static IValidator<TProperty> Validator<T, TProperty>(this IPropertyValidator<T, TProperty> @this)
-            => new Validator<TProperty>(@this.Value, @this.Command, $"{@this.PropertyName}.");
+            => new Validator<TProperty>(@this.Value, @this.Command, $"{@this.PropertyName}");
 
         public static IEnumerable<IValidator<TProperty>> Validators<T, TProperty>(this IPropertyValidator<T, IEnumerable<TProperty>> @this)
         {
@@ -58,7 +59,7 @@ namespace ObjectValidator
             return enumerable == null
                 ? Enumerable.Empty<IValidator<TProperty>>()
                 : enumerable.Select((item, i) => new Validator<TProperty>(
-                    item, @this.Command, $"{@this.PropertyName}[{i}]."));
+                    item, @this.Command, $"{@this.PropertyName}[{i}]"));
         }
 
         public static IPropertyValidator<T, TProperty> NotNull<T, TProperty>(this IPropertyValidator<T, TProperty> @this)

@@ -34,6 +34,10 @@ namespace ObjectValidator
 
         public static IPropertyValidator<T, TProperty> For<T, TProperty>(this IValidator<T> @this, Func<T, TProperty> func,
             string displayName = null)
-            => new PropertyValidator<T, TProperty>(@this, func, displayName);
+            => new PropertyValidator<T, TProperty>(@this, func, () => ReflectionUtil.GetProperyInfo(func).Name, displayName);
+
+        public static IPropertyValidator<T, T> ForThis<T>(this IValidator<T> @this,
+            string displayName = null)
+            => new PropertyValidator<T, T>(@this, _ => _, () => "", displayName);
     }
 }
