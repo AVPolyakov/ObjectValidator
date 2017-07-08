@@ -127,8 +127,10 @@ namespace ObjectValidator.Tests
         {
             var entity1 = new Entity1 {List2 = new List<long> {0}};
             var validator = entity1.Validator();
-            foreach (var item in validator.For(_ => _.List2).Validators())
-                item.ForThis("Name1").NotEmpty();
+            validator.For(_ => _.List2)
+                .NotEmpty()
+                .ForEach(item => item.ForThis("Name1")
+                    .NotEmpty());
             var failureDatas = await validator.Validate();
             Assert.Equal("List2[0]", failureDatas.Single().GetPropertyName());
             Assert.Equal("'Name1' should not be empty.", failureDatas.Single().ErrorMessage);

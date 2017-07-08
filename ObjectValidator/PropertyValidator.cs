@@ -62,6 +62,15 @@ namespace ObjectValidator
                     item, @this.Command, $"{@this.PropertyName}[{i}]"));
         }
 
+        public static IPropertyValidator<T, IEnumerable<TProperty>> ForEach<T, TProperty>(this IPropertyValidator<T, IEnumerable<TProperty>> @this,
+            Action<IValidator<TProperty>> action)
+        {
+            foreach (var item in @this.Validators())
+                action(item);
+            return @this;
+        }
+
+
         public static IPropertyValidator<T, TProperty> NotNull<T, TProperty>(this IPropertyValidator<T, TProperty> @this)
             => @this.Add(v => {
                 object value = v.Value;
