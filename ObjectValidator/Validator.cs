@@ -36,7 +36,7 @@ namespace ObjectValidator
             string displayName = null)
             => new PropertyValidator<T, TProperty>(@this, func, () => ReflectionUtil.GetProperyInfo(func).Name, displayName);
 
-        public static IPropertyValidator<T, T> ForThis<T>(this IValidator<T> @this,
+        public static IPropertyValidator<T, T> For<T>(this IValidator<T> @this,
             string displayName = null)
             => new PropertyValidator<T, T>(@this, _ => _, () => "", displayName);
     }

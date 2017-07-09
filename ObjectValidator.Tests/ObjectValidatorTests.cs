@@ -129,7 +129,7 @@ namespace ObjectValidator.Tests
             var validator = entity1.Validator();
             validator.For(_ => _.List2)
                 .NotEmpty()
-                .ForEach(item => item.ForThis("Name1")
+                .ForEach(item => item.For("Name1")
                     .NotEmpty());
             var failureDatas = await validator.Validate();
             Assert.Equal("List2[0]", failureDatas.Single().GetPropertyName());
