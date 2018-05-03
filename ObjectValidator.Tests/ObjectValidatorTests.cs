@@ -89,6 +89,8 @@ namespace ObjectValidator.Tests
         [Fact]
         public async Task NotEmpty_Int()
         {
+            GetType().Assembly.GetTypes().ResolveUsages();
+
             var entity1 = new Entity1();
             var validator = entity1.Validator();
             validator.For(_ => _.Int2)

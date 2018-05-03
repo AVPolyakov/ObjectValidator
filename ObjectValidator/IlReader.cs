@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -8,8 +10,52 @@ namespace ObjectValidator
     /// <summary>
     /// http://www.codeproject.com/KB/cs/sdilreader.aspx
     /// </summary>
-    internal static class IlReader
+    public static class IlReader
     {
+        public static void ResolveUsages(this IEnumerable<Type> types)
+        {
+            types.SelectMany(type =>
+                    type.GetMethods(AllBindingFlags).SelectMany(info => ResolveUsages(info, info.GetGenericArguments))
+                        .Concat(type.GetConstructors(AllBindingFlags).SelectMany(info => ResolveUsages(info, () => new Type[] { }))))
+                .ToList();
+        }
+
+        private static IEnumerable<int> ResolveUsages(MethodBase methodInfo, Func<Type[]> genericMethodArgumentsFunc)
+        {
+            var enumerable = Read(methodInfo).ToList();
+            var firstOrDefault = enumerable.Select((tuple, i) => new {tuple, i}) .FirstOrDefault(_ => {
+                if (_.tuple.Item1.OperandType != OperandType.InlineMethod) return false;
+                if (!_.tuple.Item2.HasValue) return false;
+                if (methodInfo.DeclaringType == null) return false;
+                var resolveMember = methodInfo.Module.ResolveMethod(
+                    _.tuple.Item2.Value,
+                    methodInfo.DeclaringType.GetGenericArguments(),
+                    genericMethodArgumentsFunc());
+                var methodInfo2 = resolveMember as MethodInfo;
+                if (methodInfo2 == null) return false;
+                if (!methodInfo2.IsGenericMethod) return false;
+                return methodInfo2.GetGenericMethodDefinition() == forMethod;
+            });
+            if (firstOrDefault != null)
+            {
+                var tuple = enumerable[24];
+                var resolveMember = methodInfo.Module.ResolveMethod(
+                    tuple.Item2.Value,
+                    methodInfo.DeclaringType.GetGenericArguments(),
+                    genericMethodArgumentsFunc());
+                var propertyInfo = ReflectionUtil.GetProperyInfo((MethodInfo) resolveMember, "func");
+                Console.WriteLine();
+            }
+            yield return 1;
+        }
+
+        private static readonly MethodInfo forMethod = GetMethodInfo
+            <Func<IValidator<string>, Func<string, int>, string, IPropertyValidator<string, int>>>(
+            (@this, func, displayName) => @this.For(func, displayName)).GetGenericMethodDefinition();
+
+        public static MethodInfo GetMethodInfo<T>(Expression<T> expression)
+            => ((MethodCallExpression)expression.Body).Method;
+
         public static IEnumerable<Tuple<OpCode, int?>> Read(MethodBase methodInfo)
         {
             var methodBody = methodInfo.GetMethodBody();
@@ -121,5 +167,26 @@ namespace ObjectValidator
 
         private static readonly OpCode[] multiByteOpCodes;
         private static readonly OpCode[] singleByteOpCodes;
+
+        public const BindingFlags AllBindingFlags = BindingFlags.Default |
+            BindingFlags.IgnoreCase |
+            BindingFlags.DeclaredOnly |
+            BindingFlags.Instance |
+            BindingFlags.Static |
+            BindingFlags.Public |
+            BindingFlags.NonPublic |
+            BindingFlags.FlattenHierarchy |
+            BindingFlags.InvokeMethod |
+            BindingFlags.CreateInstance |
+            BindingFlags.GetField |
+            BindingFlags.SetField |
+            BindingFlags.GetProperty |
+            BindingFlags.SetProperty |
+            BindingFlags.PutDispProperty |
+            BindingFlags.PutRefDispProperty |
+            BindingFlags.ExactBinding |
+            BindingFlags.SuppressChangeType |
+            BindingFlags.OptionalParamBinding |
+            BindingFlags.IgnoreReturn;
     }
 }
