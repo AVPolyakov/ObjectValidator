@@ -155,7 +155,7 @@ namespace ObjectValidator.Tests
                 Person = new Person()
             };
             var validator = message.Validator();
-            validator.For(_ => _.Person).Validator()
+            validator.For(_ => _.Person)
                 .For(_ => _.FirstName)
                 .NotEmpty();
             var failureDatas = await validator.Validate();
