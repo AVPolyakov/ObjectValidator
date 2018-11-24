@@ -9,15 +9,13 @@ using FluentValidation.Validators;
 
 namespace ObjectValidator
 {
-    public interface IPropertyValidator<out T, out TProperty>
+    public interface IPropertyValidator<out T, out TProperty>: IValidator<TProperty>
     {
         IValidator<T> Validator { get; }
         string DisplayName { get; }
         T Object { get; }
-        TProperty Value { get; }
         string ShortPropertyName { get; }
         string PropertyName { get; }
-        ValidationCommand Command { get; }
     }
 
     public class PropertyValidator<T, TProperty> : IPropertyValidator<T, TProperty>
@@ -39,27 +37,21 @@ namespace ObjectValidator
 
         public string DisplayName => displayName ?? ShortPropertyName;
 
-        public T Object => Validator.Object;
+        public T Object => Validator.Value;
 
         public string ShortPropertyName => name();
 
         public string PropertyName => string.Join(".", new[] {Validator.PropertyPrefix, ShortPropertyName}.Where(_ => !string.IsNullOrEmpty(_)));
 
         public ValidationCommand Command => Validator.Command;
+
+        public string PropertyPrefix => PropertyValidatorExtensions.Validator(this).PropertyPrefix;
     }
 
     public static class PropertyValidatorExtensions 
     {
         public static IValidator<TProperty> Validator<T, TProperty>(this IPropertyValidator<T, TProperty> @this)
             => new Validator<TProperty>(@this.Value, @this.Command, $"{@this.PropertyName}");
-
-        public static IPropertyValidator<TProperty, TSubProperty> For<T, TProperty, TSubProperty>(this IPropertyValidator<T, TProperty> @this,
-            Func<TProperty, TSubProperty> func, string displayName = null)
-            => @this.Validator().For(func, displayName);
-
-        public static IPropertyValidator<TProperty, TProperty> For<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
-            string displayName = null)
-            => @this.Validator().For(displayName);
 
         public static IEnumerable<IValidator<TProperty>> Validators<T, TProperty>(this IPropertyValidator<T, IEnumerable<TProperty>> @this)
         {

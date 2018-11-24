@@ -155,8 +155,7 @@ namespace ObjectValidator.Tests
                 Person = new Person()
             };
             var validator = message.Validator();
-            validator.For(_ => _.Person)
-                .For(_ => _.FirstName)
+            validator.For(_ => _.Person).For(_ => _.FirstName)
                 .NotEmpty();
             var failureDatas = await validator.Validate();
             Assert.Equal("Person.FirstName", failureDatas.Single().GetPropertyName());
