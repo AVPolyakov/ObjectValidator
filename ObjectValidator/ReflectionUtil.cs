@@ -23,7 +23,7 @@ namespace ObjectValidator
         /// <paramref name="func"/>. Например, <c><![CDATA[GetProperyInfo<Message, string>(_ => _.Subject)]]></c>,
         /// возвращает <see cref="PropertyInfo"/> для свойства <c>Subject</c>.
         /// </summary>
-        public static PropertyInfo GetProperyInfo<T, TPropery>(Func<T, TPropery> func)
+        public static PropertyInfo GetPropertyInfo<T, TProperty>(Func<T, TProperty> func)
         {
             var methodInfo = func.Method;
             PropertyInfo value;
@@ -42,7 +42,7 @@ namespace ObjectValidator
         /// <c><![CDATA[GetMemberInfo<string>(() => MyResources.Subject)]]></c>,
         /// возвращает <see cref="MemberInfo"/> для свойства <c>Subject</c>.
         /// </summary>
-        public static MemberInfo GetMemberInfo<TPropery>(Func<TPropery> func)
+        public static MemberInfo GetMemberInfo<TProperty>(Func<TProperty> func)
         {
             var methodInfo = func.Method;
             PropertyInfo value;
