@@ -3,18 +3,18 @@
 	public class FailureData
 	{
 	    public string ErrorMessage { get; }
-	    private readonly string propertyName;
-	    private readonly string propertyLocalizedName;
+	    private readonly string _propertyName;
+	    private readonly string _propertyLocalizedName;
 
 	    public FailureData(string errorMessage, string propertyName = null, string propertyLocalizedName = null)
 		{
-		    this.propertyName = propertyName;
-		    this.propertyLocalizedName = propertyLocalizedName;
+		    _propertyName = propertyName;
+		    _propertyLocalizedName = propertyLocalizedName;
 		    ErrorMessage = errorMessage;
 		}
 
-		public string GetPropertyName() => propertyName;
+		public string GetPropertyName() => _propertyName;
 
-	    public string GetPropertyLocalizedName() => propertyLocalizedName;
+	    public string GetPropertyLocalizedName() => _propertyLocalizedName;
 	}
 }

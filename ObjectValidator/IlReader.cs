@@ -23,10 +23,10 @@ namespace ObjectValidator
                 if (value == 0xfe)
                 {
                     value = ilAsByteArray[position++];
-                    opCode = multiByteOpCodes[value];
+                    opCode = _multiByteOpCodes[value];
                 }
                 else
-                    opCode = singleByteOpCodes[value];
+                    opCode = _singleByteOpCodes[value];
                 var metadataToken = Read(opCode, ilAsByteArray, ref position);
                 yield return Tuple.Create(opCode, metadataToken);
             }
@@ -101,25 +101,25 @@ namespace ObjectValidator
 
         static IlReader()
         {
-            singleByteOpCodes = new OpCode[0x100];
-            multiByteOpCodes = new OpCode[0x100];
+            _singleByteOpCodes = new OpCode[0x100];
+            _multiByteOpCodes = new OpCode[0x100];
             foreach (var fieldInfo in typeof (OpCodes).GetFields())
                 if (fieldInfo.FieldType == typeof (OpCode))
                 {
                     var opCode = (OpCode) fieldInfo.GetValue(null);
                     var value = unchecked((ushort) opCode.Value);
                     if (value < 0x100)
-                        singleByteOpCodes[value] = opCode;
+                        _singleByteOpCodes[value] = opCode;
                     else
                     {
                         if ((value & 0xff00) != 0xfe00)
                             throw new ApplicationException("Invalid OpCode.");
-                        multiByteOpCodes[value & 0xff] = opCode;
+                        _multiByteOpCodes[value & 0xff] = opCode;
                     }
                 }
         }
 
-        private static readonly OpCode[] multiByteOpCodes;
-        private static readonly OpCode[] singleByteOpCodes;
+        private static readonly OpCode[] _multiByteOpCodes;
+        private static readonly OpCode[] _singleByteOpCodes;
     }
 }

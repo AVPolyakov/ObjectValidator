@@ -6,11 +6,11 @@ namespace ObjectValidator
 {
     public class ValidationCommand
     {
-        private readonly List<Func<ValidationContext, Task>> funcs = new List<Func<ValidationContext, Task>>();
+        private readonly List<Func<ValidationContext, Task>> _funcs = new();
 
-        public void Add(Func<ValidationContext, Task> func) => funcs.Add(func);
+        public void Add(Func<ValidationContext, Task> func) => _funcs.Add(func);
 
-        public void Add(Action<ValidationContext> action) => funcs.Add(context => {
+        public void Add(Action<ValidationContext> action) => _funcs.Add(context => {
             action(context);
             return Task.CompletedTask;
         });
@@ -34,7 +34,7 @@ namespace ObjectValidator
         public async Task<List<FailureData>> Validate()
         {
             var context = new ValidationContext();
-            foreach (var func in funcs)
+            foreach (var func in _funcs)
                 await func(context);
             return context.Errors;
         }

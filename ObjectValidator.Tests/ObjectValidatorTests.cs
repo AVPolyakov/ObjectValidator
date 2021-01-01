@@ -21,13 +21,13 @@ namespace ObjectValidator.Tests
             command.Add(
                 nameof(Message.Subject),
                 () => string.IsNullOrWhiteSpace(message.Subject)
-                    ? new FailureData (
-                        propertyName : nameof(Message.Subject),
-                        errorMessage : $"'{nameof(Message.Subject)}' should not be empty.")
+                    ? new FailureData(
+                        propertyName: nameof(Message.Subject),
+                        errorMessage: $"'{nameof(Message.Subject)}' should not be empty.")
                     : null
             );
             var failureDatas = await command.Validate();
-            Assert.Equal("Subject", failureDatas.Single() .GetPropertyName());
+            Assert.Equal("Subject", failureDatas.Single().GetPropertyName());
             Assert.Equal("'Subject' should not be empty.", failureDatas.Single().ErrorMessage);
         }
 
@@ -39,8 +39,8 @@ namespace ObjectValidator.Tests
             subject.Command.Add(
                 subject.PropertyName,
                 () => string.IsNullOrWhiteSpace(subject.Value)
-                    ? new FailureData (
-                        propertyName:  subject.PropertyName,
+                    ? new FailureData(
+                        propertyName: subject.PropertyName,
                         errorMessage: $"'{subject.PropertyName}' should not be empty.")
                     : null
             );
@@ -126,7 +126,8 @@ namespace ObjectValidator.Tests
         [Fact]
         public async Task NestedObject()
         {
-            var message = new Message {
+            var message = new Message
+            {
                 Person = new Person()
             };
             var validator = message.Validator();
@@ -140,10 +141,12 @@ namespace ObjectValidator.Tests
         [Fact]
         public async Task NestedCollection()
         {
-            var message = new Message {
-                Attachments = new List<Attachment> {
-                    new Attachment(),
-                    new Attachment()
+            var message = new Message
+            {
+                Attachments = new List<Attachment>
+                {
+                    new(),
+                    new()
                 }
             };
             var validator = message.Validator();
@@ -292,7 +295,7 @@ namespace ObjectValidator.Tests
         public int? NullableInt1 { get; set; }
         public int Int2 { get; set; }
         public long Long1 { get; set; }
-        public List<string> List1 { get; set; } = new List<string>();
+        public List<string> List1 { get; set; } = new();
         public List<long> List2 { get; set; }
     }
 }

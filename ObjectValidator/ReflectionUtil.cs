@@ -9,14 +9,14 @@ namespace ObjectValidator
 {
     public static class ReflectionUtil
     {
-        private static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> propertyDictionary =
-            new ConcurrentDictionary<MethodInfo, PropertyInfo>();
+        private static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> _propertyDictionary =
+            new();
 
-        private static readonly ConcurrentDictionary<Type, Dictionary<MethodBase, PropertyInfo>> propertyDictionaryByGetMethod =
-            new ConcurrentDictionary<Type, Dictionary<MethodBase, PropertyInfo>>();
+        private static readonly ConcurrentDictionary<Type, Dictionary<MethodBase, PropertyInfo>> _propertyDictionaryByGetMethod =
+            new();
 
-        private static readonly ConcurrentDictionary<MethodInfo, FieldInfo> fieldDictionary =
-            new ConcurrentDictionary<MethodInfo, FieldInfo>();
+        private static readonly ConcurrentDictionary<MethodInfo, FieldInfo> _fieldDictionary =
+            new();
 
         /// <summary>
         /// Получает <see cref="PropertyInfo"/> для свойства, которое используется в теле метода
@@ -27,7 +27,7 @@ namespace ObjectValidator
         {
             var methodInfo = func.Method;
             PropertyInfo value;
-            if (propertyDictionary.TryGetValue(methodInfo, out value)) return value;
+            if (_propertyDictionary.TryGetValue(methodInfo, out value)) return value;
             var tuples = IlReader.Read(methodInfo).ToList();
             if (!tuples.Select(_ => _.Item1).SequenceEqual(new[] {OpCodes.Ldarg_1, OpCodes.Callvirt, OpCodes.Ret}))
                 throw new ArgumentException($"The {nameof(func)} must encapsulate a method with a body that " +
@@ -46,7 +46,7 @@ namespace ObjectValidator
         {
             var methodInfo = func.Method;
             PropertyInfo value;
-            if (propertyDictionary.TryGetValue(methodInfo, out value)) return value;
+            if (_propertyDictionary.TryGetValue(methodInfo, out value)) return value;
             var tuples = IlReader.Read(methodInfo).ToList();
             var codes = tuples.Select(_ => _.Item1).ToList();
             if (codes.SequenceEqual(new[] {OpCodes.Call, OpCodes.Ret}))
@@ -65,17 +65,17 @@ namespace ObjectValidator
             var methodBase = methodInfo.Module.ResolveMethod(metadataToken,
                 methodInfo.DeclaringType.GetGenericArguments(), null);
             Dictionary<MethodBase, PropertyInfo> infos;
-            if (!propertyDictionaryByGetMethod.TryGetValue(methodBase.DeclaringType, out infos))
+            if (!_propertyDictionaryByGetMethod.TryGetValue(methodBase.DeclaringType, out infos))
             {
                 infos = methodBase.DeclaringType.GetProperties(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                     .ToDictionary(_ => {
                         MethodBase method = _.GetGetMethod(true);
                         return method;
                     });
-                propertyDictionaryByGetMethod.TryAdd(methodBase.DeclaringType, infos);
+                _propertyDictionaryByGetMethod.TryAdd(methodBase.DeclaringType, infos);
             }
             var propertyInfo = infos[methodBase];
-            propertyDictionary.TryAdd(methodInfo, propertyInfo);
+            _propertyDictionary.TryAdd(methodInfo, propertyInfo);
             return propertyInfo;
         }
 
@@ -83,7 +83,7 @@ namespace ObjectValidator
         {
             var fieldInfo = methodInfo.Module.ResolveField(metadataToken,
                 methodInfo.DeclaringType.GetGenericArguments(), null);
-            fieldDictionary.TryAdd(methodInfo, fieldInfo);
+            _fieldDictionary.TryAdd(methodInfo, fieldInfo);
             return fieldInfo;
         }
     }

@@ -18,25 +18,25 @@ namespace ObjectValidator
     public class PropertyValidator<T, TProperty> : IPropertyValidator<T, TProperty>
     {
         public IValidator<T> Validator { get; }
-        private readonly Func<T, TProperty> valueFunc;
-        private readonly Func<string> name;
-        private readonly string displayName;
+        private readonly Func<T, TProperty> _valueFunc;
+        private readonly Func<string> _name;
+        private readonly string _displayName;
 
         public PropertyValidator(IValidator<T> validator, Func<T, TProperty> valueFunc, Func<string> name, string displayName)
         {
             Validator = validator;
-            this.valueFunc = valueFunc;
-            this.name = name;
-            this.displayName = displayName;
+            _valueFunc = valueFunc;
+            _name = name;
+            _displayName = displayName;
         }
 
-        public TProperty Value => valueFunc(Object);
+        public TProperty Value => _valueFunc(Object);
 
-        public string DisplayName => displayName ?? ShortPropertyName;
+        public string DisplayName => _displayName ?? ShortPropertyName;
 
         public T Object => Validator.Value;
 
-        public string ShortPropertyName => name();
+        public string ShortPropertyName => _name();
 
         public string PropertyName => string.Join(".", new[] {Validator.PropertyPrefix, ShortPropertyName}.Where(_ => !string.IsNullOrEmpty(_)));
 
