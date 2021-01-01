@@ -23,7 +23,6 @@ namespace ObjectValidator.Tests
                 () => string.IsNullOrWhiteSpace(message.Subject)
                     ? new FailureData (
                         propertyName : nameof(Message.Subject),
-                        errorCode: null,
                         errorMessage : $"'{nameof(Message.Subject)}' should not be empty.")
                     : null
             );
@@ -42,7 +41,6 @@ namespace ObjectValidator.Tests
                 () => string.IsNullOrWhiteSpace(subject.Value)
                     ? new FailureData (
                         propertyName:  subject.PropertyName,
-                        errorCode: null,
                         errorMessage: $"'{subject.PropertyName}' should not be empty.")
                     : null
             );
@@ -61,29 +59,6 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("Subject", failureDatas.Single().GetPropertyName());
             Assert.Equal("'Subject' should not be empty.", failureDatas.Single().ErrorMessage);
-        }
-
-        [Fact]
-        public async Task EmailAddress_Fail()
-        {
-            var message = new Message {Subject = "test@testcom"};
-            var validator = message.Validator();
-            validator.For(_ => _.Subject)
-                .EmailAddress();
-            var failureDatas = await validator.Validate();
-            Assert.Equal("Subject", failureDatas.Single().GetPropertyName());
-            Assert.Equal("'Subject' is not a valid email address.", failureDatas.Single().ErrorMessage);
-        }
-
-        [Fact]
-        public async Task EmailAddress_Succeed()
-        {
-            var message = new Message {Subject = "test@test.com"};
-            var validator = message.Validator();
-            validator.For(_ => _.Subject)
-                .EmailAddress();
-            var failureDatas = await validator.Validate();
-            Assert.Equal(0, failureDatas.Count);
         }
 
         [Fact]
@@ -185,17 +160,6 @@ namespace ObjectValidator.Tests
         }
 
         [Fact]
-        public async Task ErrorCode()
-        {
-            var message = new Message();
-            var validator = message.Validator();
-            validator.For(_ => _.Subject)
-                .NotEmpty();
-            var failureDatas = await validator.Validate();
-            Assert.Equal("NotEmptyValidator", failureDatas.Single().ErrorCode);
-        }
-
-        [Fact]
         public async Task DisplayName()
         {
             var message = new Message();
@@ -205,7 +169,6 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("Subject", failureDatas.Single().GetPropertyName());
             Assert.Equal("Message subject", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("NotEmptyValidator", failureDatas.Single().ErrorCode);
             Assert.Equal("'Message subject' should not be empty.", failureDatas.Single().ErrorMessage);
         }
 
@@ -219,7 +182,6 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("NullableInt1", failureDatas.Single().GetPropertyName());
             Assert.Equal("NullableInt1", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("NotNullValidator", failureDatas.Single().ErrorCode);
             Assert.Equal("'NullableInt1' must not be empty.", failureDatas.Single().ErrorMessage);
         }
 
@@ -233,7 +195,6 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("Person", failureDatas.Single().GetPropertyName());
             Assert.Equal("Person", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("NotNullValidator", failureDatas.Single().ErrorCode);
             Assert.Equal("'Person' must not be empty.", failureDatas.Single().ErrorMessage);
         }
 
@@ -247,7 +208,6 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("Int2", failureDatas.Single().GetPropertyName());
             Assert.Equal("Int2", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("NotEqualValidator", failureDatas.Single().ErrorCode);
             Assert.Equal("'Int2' should not be equal to '7'.", failureDatas.Single().ErrorMessage);
         }
 
@@ -261,7 +221,6 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("Subject", failureDatas.Single().GetPropertyName());
             Assert.Equal("Subject", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("LengthValidator", failureDatas.Single().ErrorCode);
             Assert.Equal("'Subject' must be between 3 and 5 characters. You entered 8 characters.", failureDatas.Single().ErrorMessage);
         }
 
@@ -275,7 +234,6 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("Long1", failureDatas.Single().GetPropertyName());
             Assert.Equal("Long1", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("InclusiveBetweenValidator", failureDatas.Single().ErrorCode);
             Assert.Equal("'Long1' must be between 1 and 200. You entered -25.", failureDatas.Single().ErrorMessage);
         }
 
@@ -289,38 +247,7 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("Long1", failureDatas.Single().GetPropertyName());
             Assert.Equal("Long1", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("InclusiveBetweenValidator", failureDatas.Single().ErrorCode);
             Assert.Equal("'Long1' must be between 1 and 200. You entered -25.", failureDatas.Single().ErrorMessage);
-        }
-
-        [Fact]
-        public async Task If()
-        {
-            var message = new Message {Subject = "Subject1", Body = "Body1"};
-            var validator = message.Validator();
-            validator.For(_ => _.Subject)
-                .If(v => v.Value == "Subject1", () => Resource1.TestMessage2);
-            var failureDatas = await validator.Validate();
-            Assert.Equal("Subject", failureDatas.Single().GetPropertyName());
-            Assert.Equal("Subject", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("TestMessage2", failureDatas.Single().ErrorCode);
-            Assert.Equal("Test message.", failureDatas.Single().ErrorMessage);
-        }
-
-        [Fact]
-        public async Task If_WithArgs()
-        {
-            var message = new Message {Subject = "Subject1", Body = "Body1"};
-            var validator = message.Validator();
-            validator.For(_ => _.Subject)
-                .If(v => v.Value == "Subject1",
-                    () => Resource1.TestMessage1,
-                    v => v.Value, v => v.Object.Body);
-            var failureDatas = await validator.Validate();
-            Assert.Equal("Subject", failureDatas.Single().GetPropertyName());
-            Assert.Equal("Subject", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("TestMessage1", failureDatas.Single().ErrorCode);
-            Assert.Equal("Test message 'Subject', 'Subject1', 'Body1'.", failureDatas.Single().ErrorMessage);
         }
 
         [Fact]
@@ -330,7 +257,7 @@ namespace ObjectValidator.Tests
             var validator = message.Validator();
             validator.For(_ => _.Subject)
                 .Add(v => v.Value == "Subject1"
-                    ? v.CreateFailureData(() => Resource1.TestMessage3,
+                    ? v.CreateFailureData(Resource1.TestMessage3,
                         text => text.ReplacePlaceholderWithValue(
                             MessageFormatter.CreateTuple("Subject", v.Value),
                             MessageFormatter.CreateTuple("Body", v.Object.Body)))
@@ -338,7 +265,6 @@ namespace ObjectValidator.Tests
             var failureDatas = await validator.Validate();
             Assert.Equal("Subject", failureDatas.Single().GetPropertyName());
             Assert.Equal("Subject", failureDatas.Single().GetPropertyLocalizedName());
-            Assert.Equal("TestMessage3", failureDatas.Single().ErrorCode);
             Assert.Equal("Test message 'Subject1', 'Body1'.", failureDatas.Single().ErrorMessage);
         }
     }

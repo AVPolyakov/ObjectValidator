@@ -2,10 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using FluentValidation;
-using FluentValidation.Validators;
 
 namespace ObjectValidator
 {
@@ -74,7 +71,7 @@ namespace ObjectValidator
             => @this.Add(v => {
                 object value = v.Value;
                 return value == null
-                    ? v.CreateFailureData(nameof(NotNullValidator))
+                    ? v.CreateFailureData("'{PropertyName}' must not be empty.")
                     : null;
             });
 
@@ -94,18 +91,13 @@ namespace ObjectValidator
                         b = Equals(value, default(TProperty));
                 }
                 return b
-                    ? v.CreateFailureData(nameof(NotEmptyValidator))
+                    ? v.CreateFailureData("'{PropertyName}' should not be empty.")
                     : null;
             });
 
-        private static readonly Regex emailRegex = new Regex(new EmailValidator().Expression, RegexOptions.IgnoreCase);
-
-        public static IPropertyValidator<T, string> EmailAddress<T>(this IPropertyValidator<T, string> @this)
-            => @this.Add(v => !emailRegex.IsMatch(@this.Value) ? v.CreateFailureData(nameof(EmailValidator)) : null);
-
         public static IPropertyValidator<T, TProperty> NotEqual<T, TProperty>(this IPropertyValidator<T, TProperty> @this, TProperty comparisonValue)
             => @this.Add(v => Equals(v.Value, comparisonValue)
-                ? v.CreateFailureData(nameof(NotEqualValidator),
+                ? v.CreateFailureData("'{PropertyName}' should not be equal to '{ComparisonValue}'.",
                     text => text.ReplacePlaceholderWithValue(MessageFormatter.CreateTuple("ComparisonValue", comparisonValue)))
                 : null);
 
@@ -113,7 +105,7 @@ namespace ObjectValidator
             => @this.Add(v => {
                 var length = @this.Value?.Length ?? 0;
                 return length < minLength || length > maxLength
-                    ? v.CreateFailureData(nameof(LengthValidator),
+                    ? v.CreateFailureData("'{PropertyName}' must be between {MinLength} and {MaxLength} characters. You entered {TotalLength} characters.",
                         text => text.ReplacePlaceholderWithValue(
                             MessageFormatter.CreateTuple("MaxLength", maxLength),
                             MessageFormatter.CreateTuple("MinLength", minLength),
@@ -125,7 +117,7 @@ namespace ObjectValidator
             where TProperty : IComparable<TProperty>, IComparable
             => @this.Add(v => {
                 return from.CompareTo(@this.Value) > 0 || to.CompareTo(@this.Value) < 0
-                    ? v.CreateFailureData(nameof(InclusiveBetweenValidator),
+                    ? v.CreateFailureData("'{PropertyName}' must be between {From} and {To}. You entered {Value}.",
                         text => text.ReplacePlaceholderWithValue(
                             MessageFormatter.CreateTuple("From", from),
                             MessageFormatter.CreateTuple("To", to),
@@ -136,32 +128,20 @@ namespace ObjectValidator
         public static IPropertyValidator<T, TProperty> ExclusiveBetween<T, TProperty>(this IPropertyValidator<T, TProperty> @this, TProperty from, TProperty to)
             where TProperty : IComparable<TProperty>, IComparable
             => @this.Add(v => from.CompareTo(@this.Value) >= 0 || to.CompareTo(@this.Value) <= 0
-                ? v.CreateFailureData(nameof(InclusiveBetweenValidator),
+                ? v.CreateFailureData("'{PropertyName}' must be between {From} and {To}. You entered {Value}.",
                     text => text.ReplacePlaceholderWithValue(
-                        MessageFormatter.CreateTuple("From", @from),
+                        MessageFormatter.CreateTuple("From", from),
                         MessageFormatter.CreateTuple("To", to),
                         MessageFormatter.CreateTuple("Value", @this.Value)))
                 : null);
 
-        public static FailureData CreateFailureData<T, TProperty>(this IPropertyValidator<T, TProperty> @this, Func<string> message,
+        public static FailureData CreateFailureData<T, TProperty>(this IPropertyValidator<T, TProperty> @this, string message,
             Func<string, string> converter = null)
         {
-            var text = message().ReplacePlaceholderWithValue(MessageFormatter.CreateTuple("PropertyName", @this.DisplayName));
-            return new FailureData(
-                errorMessage: converter != null ? converter(text) : text,
-                errorCode: ReflectionUtil.GetMemberInfo(message).Name,
-                propertyName: @this.PropertyName,
-                propertyLocalizedName: @this.DisplayName);
-        }
-
-        public static FailureData CreateFailureData<T, TProperty>(this IPropertyValidator<T, TProperty> @this, string key,
-            Func<string, string> converter = null)
-        {
-            var text = ValidatorOptions.LanguageManager.GetString(key)
+            var text = message
                 .ReplacePlaceholderWithValue(MessageFormatter.CreateTuple("PropertyName", @this.DisplayName));
             return new FailureData(
                 errorMessage: converter != null ? converter(text) : text,
-                errorCode: key,
                 propertyName: @this.PropertyName,
                 propertyLocalizedName: @this.DisplayName);
         }
