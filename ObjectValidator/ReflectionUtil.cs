@@ -9,14 +9,11 @@ namespace ObjectValidator
 {
     public static class ReflectionUtil
     {
-        private static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> _propertyDictionary =
-            new();
+        private static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> _propertyDictionary = new();
 
-        private static readonly ConcurrentDictionary<Type, Dictionary<MethodBase, PropertyInfo>> _propertyDictionaryByGetMethod =
-            new();
+        private static readonly ConcurrentDictionary<Type, Dictionary<MethodBase, PropertyInfo>> _propertyDictionaryByGetMethod = new();
 
-        private static readonly ConcurrentDictionary<MethodInfo, FieldInfo> _fieldDictionary =
-            new();
+        private static readonly ConcurrentDictionary<MethodInfo, FieldInfo> _fieldDictionary = new();
 
         /// <summary>
         /// Получает <see cref="PropertyInfo"/> для свойства, которое используется в теле метода
