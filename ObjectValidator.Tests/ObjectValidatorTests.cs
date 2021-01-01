@@ -257,7 +257,7 @@ namespace ObjectValidator.Tests
             var validator = message.Validator();
             validator.For(_ => _.Subject)
                 .Add(v => v.Value == "Subject1"
-                    ? v.CreateFailureData(Resource1.TestMessage3,
+                    ? v.CreateFailureData("Test message '{Subject}', '{Body}'.",
                         text => text.ReplacePlaceholderWithValue(
                             MessageFormatter.CreateTuple("Subject", v.Value),
                             MessageFormatter.CreateTuple("Body", v.Object.Body)))
