@@ -70,7 +70,6 @@ namespace ObjectValidator
             return @this;
         }
 
-
         public static IPropertyValidator<T, TProperty> NotNull<T, TProperty>(this IPropertyValidator<T, TProperty> @this)
             => @this.Add(v => {
                 object value = v.Value;
@@ -142,16 +141,6 @@ namespace ObjectValidator
                         MessageFormatter.CreateTuple("From", @from),
                         MessageFormatter.CreateTuple("To", to),
                         MessageFormatter.CreateTuple("Value", @this.Value)))
-                : null);
-
-        public static IPropertyValidator<T, TProperty> If<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
-            Func<IPropertyValidator<T, TProperty>, bool> func, Func<string> message, params Func<IPropertyValidator<T, TProperty>, object>[] formatArgs) 
-            => @this.If(value => Task.FromResult(func(value)), message, formatArgs);
-
-        public static IPropertyValidator<T, TProperty> If<T, TProperty>(this IPropertyValidator<T, TProperty> @this,
-            Func<IPropertyValidator<T, TProperty>, Task<bool>> func, Func<string> message, params Func<IPropertyValidator<T, TProperty>, object>[] formatArgs)
-            => @this.Add(async v => await func(v)
-                ? v.CreateFailureData(message, text => string.Format(text, formatArgs.Select(f => f(v)).ToArray()))
                 : null);
 
         public static FailureData CreateFailureData<T, TProperty>(this IPropertyValidator<T, TProperty> @this, Func<string> message,
