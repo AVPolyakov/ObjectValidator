@@ -1,11 +1,11 @@
 # ObjectValidator
-Инновационность проекта ObjectValidator состоит в том, что используется быстрый алгоритм получения имени свойства. Алгоритм основан на разборе тела метода
+Валидация .NET объектов. Привязка ошибок к имени свойства объекта. ObjectValidator использует быстрый алгоритм получения имени свойства. Алгоритм основан на разборе тела метода
 [Parsing the IL of a Method Body](https://www.codeproject.com/Articles/14058/Parsing-the-IL-of-a-Method-Body).
 
 ## Почему не [FluentValidation](https://github.com/JeremySkinner/FluentValidation)
 Typically, FluentValidation is used against a viewmodel/inputmodel **not a business entity** [[1]](https://github.com/JeremySkinner/FluentValidation/issues/260#issuecomment-220558484), [[2]](http://stackoverflow.com/a/25313887).
 
-Для получения имени свойства в FluentValidation используется дерево выражений (expression tree). К сожалению, деревья выражений в .Net работают медленно. Деревья выражений замедляют работу со свойствами объектов в 60 раз [[3]](https://github.com/AVPolyakov/PropertyInfoBenchmark). Из-за этого рекомендуется кешировать валидаторы в статическом контексте [[4]](https://github.com/JeremySkinner/FluentValidation/wiki/b.-Creating-a-Validator#a-note-on-performance). Это усложняет передачу внешних параметров в валидатор
+Для получения имени свойства в FluentValidation используется дерево выражений (expression tree). К сожалению, деревья выражений в .Net работают медленно. Деревья выражений замедляют работу со свойствами объектов в 60 раз [[3]](https://github.com/AVPolyakov/PropertyInfoBenchmark). Из-за этого рекомендуется кешировать валидаторы в статическом контексте [[4]](https://stackoverflow.com/questions/46512259/performance-with-fluent-validator), [[10]](https://github.com/FluentValidation/FluentValidation/blob/c90306b0191f8625a56a4b4a96b6b6462a43b137/src/FluentValidation.AspNetCore/ValidatorDescriptorCache.cs#L28). Это усложняет передачу внешних параметров в валидатор
 [[5]](https://github.com/JeremySkinner/FluentValidation/issues/449),
 [[6]](http://stackoverflow.com/a/29809446),
 [[1]](https://github.com/JeremySkinner/FluentValidation/issues/260#issuecomment-220558484),
