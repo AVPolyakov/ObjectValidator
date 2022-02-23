@@ -1,5 +1,5 @@
 # ObjectValidator
-Валидация .NET объектов. Привязка ошибок к имени свойства объекта. ObjectValidator использует быстрый алгоритм получения имени свойства. Алгоритм основан на разборе тела метода
+Простое API для валидации .NET объектов. Привязка ошибок к имени свойства объекта. Для ссылки на свойство используется быстрый тип `Func<>` вместо медленных деревьев выражений `Expression<Func<>>`. Реализован быстрый алгоритм получения имени свойства. Алгоритм основан на разборе тела метода
 [Parsing the IL of a Method Body](https://www.codeproject.com/Articles/14058/Parsing-the-IL-of-a-Method-Body).
 
 ## Почему не [FluentValidation](https://github.com/JeremySkinner/FluentValidation)
@@ -16,6 +16,8 @@ Typically, FluentValidation is used against a viewmodel/inputmodel **not a busin
 
 >Do not forget that **your goal is to implement validation, not to use FluentValidation everywhere**. Sometimes we implement validation logic as a separate method, that works with ViewModel and fill ModelState in ASP.NET MVC.
 >If you can't find solution, that match your requirements, then manual implementation would be better than _crutchful_ implementation with library [[6]](http://stackoverflow.com/a/29809446).
+
+ObjectValidator использует быстрый тип `Func<>`, поэтому кэширование не требуется. Отсутствие кэширования существенно упрощает API для валидации.
 
 ## Принцип работы ObjectValidator
 Для задания правил валидации в `ValidationCommand` необходимо добавить функции (лямбды), которые выполняют валидацию.
